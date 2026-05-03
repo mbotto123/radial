@@ -1,0 +1,416 @@
+#include <deal.II/grid/tria.h>
+
+#include <deal.II/dofs/dof_handler.h>
+#include <deal.II/fe/fe_simplex_p.h>
+#include <deal.II/fe/fe_values.h>
+#include <deal.II/fe/mapping_p1.h>
+
+#include <deal.II/base/quadrature_lib.h>
+
+#include <deal.II/lac/vector.h>
+#include <deal.II/lac/full_matrix.h>
+#include <deal.II/lac/householder.h>
+
+#include <deal.II/numerics/vector_tools.h>
+
+#include <cmath>
+#include <set>
+#include <functional>
+
+namespace radial
+{
+  using namespace dealii;
+
+  // TODO: use MappingFE to allow for isoparametric
+  template <int dim>
+  void recover_solution_ppr(const DoFHandler<dim>& dof_handler, const MappingP1<dim>& mapping,
+                            const Vector<double>& solution,
+                            const DoFHandler<dim>& dof_handler_enriched,
+                            Vector<double>& solution_enriched)
+  {
+    //-------------------------------------------------------------------------//  
+    // Base finite element field
+    const FiniteElement<dim>& fe = dof_handler.get_fe();
+    const unsigned int order = fe.degree;
+
+    const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+    
+    // Reference coordinates of the Lagrange nodes
+    // (also used to get the values of the base finite element field at those nodes)
+    Quadrature<dim> lagrange_nodes(fe.get_unit_support_points());
+    FEValues<dim> fe_values_nodes(mapping,
+                                  fe,
+                                  lagrange_nodes,
+                                  update_values | update_quadrature_points);
+
+    // Vector to store values at the Lagrange nodes of an element
+    std::vector<double> solution_values(lagrange_nodes.size());
+    //-------------------------------------------------------------------------//  
+
+    //-------------------------------------------------------------------------//  
+    // Enriched finite element field
+    const unsigned int order_enriched = order + 1;
+    const FiniteElement<dim>& fe_enriched = dof_handler_enriched.get_fe();
+
+    const unsigned int dofs_per_cell_enriched = fe_enriched.n_dofs_per_cell();
+    std::vector<types::global_dof_index> local_dof_indices_enriched(dofs_per_cell_enriched);
+
+    // Reference coordinates of the Lagrange nodes
+    Quadrature<dim> lagrange_nodes_enriched(fe_enriched.get_unit_support_points());
+    FEValues<dim> fe_values_nodes_enriched(mapping,
+                                           fe_enriched,
+                                           lagrange_nodes_enriched,
+                                           update_quadrature_points); // don't need values
+    //-------------------------------------------------------------------------//  
+
+
+    //-------------------------------------------------------------------------//
+    // Create data structure that contains the baseline patch for every vertex.
+    //
+    // The way a "patch" is implemented is as a list of iterators, i.e. pointers
+    // to the different cells in the patch. These pointers may be pointing to
+    // cells that are far away from each other in memory, so maybe there is a
+    // more efficient way to implement this in terms of memory access. TODO.
+    //
+    // Two data structures are created, one for the non-enriched field, and one
+    // for the enriched field.
+
+    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
+
+    std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>> vertex_to_cell;
+    vertex_to_cell.resize(triangulation.n_vertices());
+
+    std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>> vertex_to_cell_enriched;
+    vertex_to_cell_enriched.resize(triangulation.n_vertices());
+
+    // Get iterator for enriched field explicitly. We need to take care of incrementing
+    // this iterator manually, so that it keeps up with the iterator we're looping over.
+    typename DoFHandler<dim>::active_cell_iterator cell_enriched_it = dof_handler_enriched.begin();
+
+    for (const auto &cell: dof_handler.active_cell_iterators())
+    {
+      for (const auto v: cell->vertex_indices())
+      {
+        // Add base field cell
+        vertex_to_cell[cell->vertex_index(v)].emplace_back(cell);
+        // Add enriched field cell
+        vertex_to_cell_enriched[cell->vertex_index(v)].emplace_back(cell_enriched_it);
+      }
+      
+      ++cell_enriched_it; // This iterator needs to be incremented manually
+    }
+    //-------------------------------------------------------------------------//
+
+    //-------------------------------------------------------------------------//
+    // Create monomial basis for least-squares fit
+   
+    // Minimum number of sampling points required to get a solvable system on a patch
+    unsigned int min_points;
+    if (dim == 2)
+    {
+      min_points = 0.5 * (order_enriched + 1) * (order_enriched + 2);
+    }
+    else if (dim == 3)
+    {
+      min_points = (1.0/6.0) * (order_enriched + 1) * (order_enriched + 2) * (order_enriched + 3);
+    }
+    
+    std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(min_points);
+   
+    if (dim == 2)
+    {
+      if (order == 1)
+      {
+        patch_basis_funcs[0] = [](Point<dim> psi){ return 1.0; };
+        patch_basis_funcs[1] = [](Point<dim> psi){ return psi(0); };
+        patch_basis_funcs[2] = [](Point<dim> psi){ return psi(1); };
+        patch_basis_funcs[3] = [](Point<dim> psi){ return psi(0)*psi(0); };
+        patch_basis_funcs[4] = [](Point<dim> psi){ return psi(0)*psi(1); };
+        patch_basis_funcs[5] = [](Point<dim> psi){ return psi(1)*psi(1); };
+      }
+      else if (order == 2)
+      {
+        patch_basis_funcs[0] = [](Point<dim> psi){ return 1.0; };
+        patch_basis_funcs[1] = [](Point<dim> psi){ return psi(0); };
+        patch_basis_funcs[2] = [](Point<dim> psi){ return psi(1); };
+        patch_basis_funcs[3] = [](Point<dim> psi){ return psi(0)*psi(0); };
+        patch_basis_funcs[4] = [](Point<dim> psi){ return psi(0)*psi(1); };
+        patch_basis_funcs[5] = [](Point<dim> psi){ return psi(1)*psi(1); };
+        patch_basis_funcs[6] = [](Point<dim> psi){ return psi(0)*psi(0)*psi(0); };
+        patch_basis_funcs[7] = [](Point<dim> psi){ return psi(0)*psi(0)*psi(1); };
+        patch_basis_funcs[8] = [](Point<dim> psi){ return psi(0)*psi(1)*psi(1); };
+        patch_basis_funcs[9] = [](Point<dim> psi){ return psi(1)*psi(1)*psi(1); };
+      }
+      else
+      {
+        // deal.ii does not currently support >P3 triangles, so we cannot do
+        // P3 to P4 enrichment
+        Assert(order <= 2,
+               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet.")); 
+      }
+    }
+    else if (dim == 3)
+    {
+      if (order == 1)
+      {
+        patch_basis_funcs[0] = [](Point<dim> psi){ return 1.0; };
+        patch_basis_funcs[1] = [](Point<dim> psi){ return psi(0); };
+        patch_basis_funcs[2] = [](Point<dim> psi){ return psi(1); };
+        patch_basis_funcs[3] = [](Point<dim> psi){ return psi(2); };
+        patch_basis_funcs[4] = [](Point<dim> psi){ return psi(0)*psi(0); };
+        patch_basis_funcs[5] = [](Point<dim> psi){ return psi(0)*psi(1); };
+        patch_basis_funcs[6] = [](Point<dim> psi){ return psi(0)*psi(2); };
+        patch_basis_funcs[7] = [](Point<dim> psi){ return psi(1)*psi(1); };
+        patch_basis_funcs[8] = [](Point<dim> psi){ return psi(1)*psi(2); };
+        patch_basis_funcs[9] = [](Point<dim> psi){ return psi(2)*psi(2); };
+      }
+      else
+      {
+        Assert(order <= 1,
+               ExcMessage("Recovery not implemented beyond P1 in 3D."));
+      }
+    }
+    //-------------------------------------------------------------------------//
+
+    //-------------------------------------------------------------------------//
+    // Loop through vertices to construct recovery patches
+    
+    unsigned int min_points_linear;
+    if (dim == 2)
+    {
+      min_points_linear = 0.5 * (2 + 1) * (2 + 2);
+    }
+    else if (dim == 3)
+    {
+      min_points_linear = (1.0/6.0) * (2 + 1) * (2 + 2) * (2 + 3);
+    }
+
+    const std::vector<Point<dim>> &vertex_coords = triangulation.get_vertices();
+
+    for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
+    {
+      std::set<typename DoFHandler<dim>::active_cell_iterator> patch_cells;
+      
+      // Set to keep count of patch DOFs
+      std::set<types::global_dof_index> patch_dofs;                     
+
+      // Add cells that contain the central vertex to the patch
+      for (const auto &cell: vertex_to_cell[v])
+      {
+        patch_cells.insert(cell);
+   
+        cell->get_dof_indices(local_dof_indices);
+        for (unsigned int i : fe_values_nodes.dof_indices())
+          patch_dofs.insert(local_dof_indices[i]);
+      }
+
+      std::set<unsigned int> patch_vertices;
+      std::set<unsigned int> neighbors;
+
+      for (const auto &cell: vertex_to_cell[v])
+      {
+        for (const auto v: cell->vertex_indices())
+        {
+          unsigned int neighbor = cell->vertex_index(v);
+
+          patch_vertices.insert(neighbor);
+
+          if (neighbor != v)
+            neighbors.insert(neighbor);
+        }
+      }
+
+      unsigned int npoints = patch_vertices.size();
+
+      int growth_iter = 0;
+      const int max_iter = 3;
+
+      while (growth_iter < max_iter && npoints <= min_points_linear)
+      {
+        // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
+        for (const auto& neighbor : neighbors)
+        {
+          for (const auto &cell: vertex_to_cell[neighbor])
+          {
+            patch_cells.insert(cell);
+
+            cell->get_dof_indices(local_dof_indices);
+            for (unsigned int i : fe_values_nodes.dof_indices())
+              patch_dofs.insert(local_dof_indices[i]);
+          }
+        }
+
+        std::set<unsigned int> next_neighbors;
+
+        // Determine indices of sampling points on new patch boundary defined by this growth iteration
+        for (const auto& neighbor : neighbors)
+        {
+          std::set<unsigned int> neighbors_of_neighbor;
+
+          for (const auto &cell: vertex_to_cell[neighbor])
+          {
+            for (const auto v: cell->vertex_indices())
+            {
+              unsigned int neighbor_of_neighbor = cell->vertex_index(v);
+
+              if (neighbor_of_neighbor != neighbor)
+                neighbors_of_neighbor.insert(neighbor_of_neighbor);
+            }
+          }
+
+          for (const auto& neighbor_of_neighbor : neighbors_of_neighbor)
+          {
+            if (patch_vertices.count(neighbor_of_neighbor) < 1)
+              next_neighbors.insert(neighbor_of_neighbor);
+          }
+        }
+
+        // Update overall list of patch vertices 
+        for (const auto& next_neighbor : next_neighbors)
+          patch_vertices.insert(next_neighbor);
+
+        neighbors = next_neighbors;
+
+        npoints = patch_vertices.size();
+
+        growth_iter++;
+      }
+
+      // Fail if max patch growth iteration was not enough
+      Assert(patch_dofs.size() >= min_points + 1,
+             ExcMessage("Recovery patch doesn't have enough sampling points!"));
+      
+      int nvert_patch = patch_vertices.size();
+
+      std::vector<std::vector<double>> coord_patch_vertices(dim);
+      for (int d = 0; d < dim; d++)
+        coord_patch_vertices[d].resize(nvert_patch);
+
+      int vertex_count = 0;
+      for (const auto& vertex : patch_vertices)
+      {
+        for (int d = 0; d < dim; d++)
+          coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
+
+        vertex_count++;
+      }
+
+      // Find limits of the bounding box that contains the patch
+      Point<dim> coord_min, coord_max;
+      for (int d = 0; d < dim; d++)
+      {
+        coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+        coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+      }
+
+      // Create RHS and system matrix for discrete least-squares
+      Vector<double> rhs(patch_dofs.size());
+      FullMatrix<double> A(patch_dofs.size(), min_points);
+      
+      // Discrete least-squares
+      
+      std::set<types::global_dof_index> eval_dofs;
+      unsigned int eval_count = 0;
+      
+      for (const auto &cell: patch_cells)
+      {
+        fe_values_nodes.reinit(cell);
+
+        cell->get_dof_indices(local_dof_indices);
+
+        // Get values of the finite element field at the Lagrange nodes
+        fe_values_nodes.get_function_values(solution, solution_values);
+        
+        for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
+        {
+          if (eval_dofs.count(local_dof_indices[i]) < 1) // if no one has sampled at this node yet
+          {
+            // Sample solution at the patch node
+            rhs(eval_count) = solution_values[i];
+
+            Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
+
+            Point<dim> node_scaled_coords;
+            for (int d = 0; d < dim; d++)
+              node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
+
+            for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
+              A(eval_count, monomial_index) = patch_basis_funcs[monomial_index](node_scaled_coords);
+
+            eval_count++;
+          }
+          eval_dofs.insert(local_dof_indices[i]);
+        }
+      }
+
+      // Solve least-squares system
+      Vector<double> a(min_points);
+      Householder<double> QR(A);
+      double lsq_norm = QR.least_squares(a, rhs);
+
+      //std::cout << "Patch " << v << " LSQ norm = " << lsq_norm << std::endl;
+
+      // Evaluate recovered solution polynomials at selected locations on patch
+      // (nodes that are interior to edges attached to the patch-central vertex,
+      // and cell nodes of cells that contain the patch-central vertex)
+      
+      std::set<types::global_dof_index> eval_dofs_enriched;
+
+      for (const auto &cell : vertex_to_cell_enriched[v])
+      {
+        fe_values_nodes_enriched.reinit(cell);
+
+        cell->get_dof_indices(local_dof_indices_enriched);
+
+        // Find the local vertex index of the patch-central vertex
+        unsigned int central_vert_local_index;
+        bool central_vert_found = false;
+        for (const auto v_enriched : cell->vertex_indices())
+        {
+          if (cell->vertex_index(v_enriched) == v)
+          {
+            central_vert_local_index = v_enriched;
+            central_vert_found = true;
+          }
+        }
+        
+        Assert(central_vert_found,
+               ExcMessage("Central vertex of recovery patch not found!"));
+
+        // Evaluate recovered solution at edge and cell nodes
+        for (const unsigned int i : fe_values_nodes_enriched.quadrature_point_indices())
+        {
+          // Node coordinates in reference space
+          Point<dim> node_ref_coords = fe_enriched.unit_support_point(i);
+         
+          std::vector<double> node_ref_barycentric(dim + 1);
+          node_ref_barycentric[0] = 1.0;
+          for (int d = 0; d < dim; d++)
+          {
+            node_ref_barycentric[0] -= node_ref_coords[d];
+            node_ref_barycentric[d + 1] = node_ref_coords[d];
+          }
+
+          double node_ref_barycentric_patch = node_ref_barycentric[central_vert_local_index];
+            
+          Point<dim> node_physical_coords = fe_values_nodes_enriched.quadrature_point(i);
+
+          Point<dim> node_scaled_coords;
+          for (int d = 0; d < dim; d++)
+            node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
+          
+          double solution_enriched_node = 0;
+          for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
+            solution_enriched_node += a(monomial_index) * patch_basis_funcs[monomial_index](node_scaled_coords);
+
+          if (eval_dofs_enriched.count(local_dof_indices_enriched[i]) < 1)
+            solution_enriched(local_dof_indices_enriched[i]) += node_ref_barycentric_patch * solution_enriched_node;
+
+          eval_dofs_enriched.insert(local_dof_indices_enriched[i]);
+        }
+      }
+    }
+    //-------------------------------------------------------------------------//
+  }
+} // namespace radial

@@ -1,0 +1,2 @@
+set(TEST_LIBRARIES radial)
+DEAL_II_PICKUP_TESTS()
