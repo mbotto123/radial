@@ -54,6 +54,8 @@ This thesis includes many references on finite element solution and gradient rec
 > L. Chamoin and F. Legoll. “An Introductory Review on A Posteriori Error Estimation in Finite Element Computations”.
 > In: _SIAM Review_ 65.4 (2023), pp. 963–1028.
 
+One of the mesh size formulas used in this library is from the paper by Chamoin and Legoll.
+
 ## Acknowledgements
 
 ### deal.ii
@@ -73,3 +75,5 @@ Gmsh is used for re-meshing. Gmsh is acknowledged with the following reference:
 
 > C. Geuzaine and J.-F. Remacle. "Gmsh: a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities".
 > In: _International Journal for Numerical Methods in Engineering_, 79.11 (2009), pp. 1309-1331.
+
+One of the mesh size formulas used in this library is from the Gmsh example `gmsh/examples/api/adapt_mesh.cpp` developed by C. Geuzaine.
