@@ -13,4 +13,9 @@ namespace radial
                                         const Vector<double>& solution,
                                         const DoFHandler<2>& dof_handler_enriched,
                                         Vector<double>& solution_enriched);
+
+  template void recover_solution_ppr<3>(const DoFHandler<3>& dof_handler, const MappingP1<3>& mapping,
+                                        const Vector<double>& solution,
+                                        const DoFHandler<3>& dof_handler_enriched,
+                                        Vector<double>& solution_enriched);
 } // namespace radial
