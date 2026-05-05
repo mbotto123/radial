@@ -223,10 +223,94 @@ namespace radial
 
       unsigned int npoints = patch_vertices.size();
 
+      // Vector of least-squares coefficients
+      Vector<double> a(min_points);
+
+      // Points to store coordinates of patch bounding box
+      Point<dim> coord_min, coord_max;
+
+      double lsq_norm;
+
+      // Try least-squares on baseline patch if it already has enough points.
+      // If this is successful, then we don't need to grow the patch.
+      if (npoints > min_points)
+      {
+        std::vector<std::vector<double>> coord_patch_vertices(dim);
+        for (int d = 0; d < dim; d++)
+          coord_patch_vertices[d].resize(npoints);
+
+        int vertex_count = 0;
+        for (const auto& vertex : patch_vertices)
+        {
+          for (int d = 0; d < dim; d++)
+            coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
+
+          vertex_count++;
+        }
+
+        // Find limits of the bounding box that contains the patch
+        for (int d = 0; d < dim; d++)
+        {
+          coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+          coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+        }
+
+        // Create RHS and system matrix for discrete least-squares
+        Vector<double> rhs(patch_dofs.size());
+        FullMatrix<double> A(patch_dofs.size(), min_points);
+        
+        // Discrete least-squares
+        
+        std::set<types::global_dof_index> eval_dofs;
+        unsigned int eval_count = 0;
+        
+        for (const auto &cell: patch_cells)
+        {
+          fe_values_nodes.reinit(cell);
+
+          cell->get_dof_indices(local_dof_indices);
+
+          // Get values of the finite element field at the Lagrange nodes
+          fe_values_nodes.get_function_values(solution, solution_values);
+          
+          for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
+          {
+            if (eval_dofs.count(local_dof_indices[i]) < 1) // if no one has sampled at this node yet
+            {
+              // Sample solution at the patch node
+              rhs(eval_count) = solution_values[i];
+
+              Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
+
+              Point<dim> node_scaled_coords;
+              for (int d = 0; d < dim; d++)
+                node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
+
+              for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
+                A(eval_count, monomial_index) = patch_basis_funcs[monomial_index](node_scaled_coords);
+
+              eval_count++;
+            }
+            eval_dofs.insert(local_dof_indices[i]);
+          }
+        }
+
+        // Solve least-squares system
+        Householder<double> QR(A);
+        lsq_norm = QR.least_squares(a, rhs);
+      }
+
       int growth_iter = 0;
       const int max_iter = 3;
 
-      while (growth_iter < max_iter && npoints <= min_points_linear)
+      // The residual norm value at which we consider least-squares to have failed.
+      // Needed to add this for 3D, because in 3D it was possible for a patch to have
+      // enough sampling points but still give an unacceptable least-squares result.
+      // TODO: Experiment with this value
+      double lsq_norm_tol = 1e0;
+
+      while ((growth_iter < max_iter && npoints <= min_points_linear) ||
+             (lsq_norm > lsq_norm_tol))
       {
         // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
         for (const auto& neighbor : neighbors)
@@ -274,82 +358,81 @@ namespace radial
 
         npoints = patch_vertices.size();
 
+        if (npoints > min_points)
+        {
+          // If we have enough points, try least-squares and check residual norm
+
+          std::vector<std::vector<double>> coord_patch_vertices(dim);
+          for (int d = 0; d < dim; d++)
+            coord_patch_vertices[d].resize(npoints);
+
+          int vertex_count = 0;
+          for (const auto& vertex : patch_vertices)
+          {
+            for (int d = 0; d < dim; d++)
+              coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
+
+            vertex_count++;
+          }
+
+          // Find limits of the bounding box that contains the patch
+          for (int d = 0; d < dim; d++)
+          {
+            coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+            coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+          }
+
+          // Create RHS and system matrix for discrete least-squares
+          Vector<double> rhs(patch_dofs.size());
+          FullMatrix<double> A(patch_dofs.size(), min_points);
+          
+          // Discrete least-squares
+          
+          std::set<types::global_dof_index> eval_dofs;
+          unsigned int eval_count = 0;
+          
+          for (const auto &cell: patch_cells)
+          {
+            fe_values_nodes.reinit(cell);
+
+            cell->get_dof_indices(local_dof_indices);
+
+            // Get values of the finite element field at the Lagrange nodes
+            fe_values_nodes.get_function_values(solution, solution_values);
+            
+            for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
+            {
+              if (eval_dofs.count(local_dof_indices[i]) < 1) // if no one has sampled at this node yet
+              {
+                // Sample solution at the patch node
+                rhs(eval_count) = solution_values[i];
+
+                Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
+
+                Point<dim> node_scaled_coords;
+                for (int d = 0; d < dim; d++)
+                  node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
+
+                for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
+                  A(eval_count, monomial_index) = patch_basis_funcs[monomial_index](node_scaled_coords);
+
+                eval_count++;
+              }
+              eval_dofs.insert(local_dof_indices[i]);
+            }
+          }
+
+          // Solve least-squares system
+          Householder<double> QR(A);
+          lsq_norm = QR.least_squares(a, rhs);
+        }
+
         growth_iter++;
       }
 
       // Fail if max patch growth iteration was not enough
       Assert(patch_dofs.size() >= min_points + 1,
              ExcMessage("Recovery patch doesn't have enough sampling points!"));
-      
-      int nvert_patch = patch_vertices.size();
-
-      std::vector<std::vector<double>> coord_patch_vertices(dim);
-      for (int d = 0; d < dim; d++)
-        coord_patch_vertices[d].resize(nvert_patch);
-
-      int vertex_count = 0;
-      for (const auto& vertex : patch_vertices)
-      {
-        for (int d = 0; d < dim; d++)
-          coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
-
-        vertex_count++;
-      }
-
-      // Find limits of the bounding box that contains the patch
-      Point<dim> coord_min, coord_max;
-      for (int d = 0; d < dim; d++)
-      {
-        coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
-        coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
-      }
-
-      // Create RHS and system matrix for discrete least-squares
-      Vector<double> rhs(patch_dofs.size());
-      FullMatrix<double> A(patch_dofs.size(), min_points);
-      
-      // Discrete least-squares
-      
-      std::set<types::global_dof_index> eval_dofs;
-      unsigned int eval_count = 0;
-      
-      for (const auto &cell: patch_cells)
-      {
-        fe_values_nodes.reinit(cell);
-
-        cell->get_dof_indices(local_dof_indices);
-
-        // Get values of the finite element field at the Lagrange nodes
-        fe_values_nodes.get_function_values(solution, solution_values);
-        
-        for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
-        {
-          if (eval_dofs.count(local_dof_indices[i]) < 1) // if no one has sampled at this node yet
-          {
-            // Sample solution at the patch node
-            rhs(eval_count) = solution_values[i];
-
-            Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
-
-            Point<dim> node_scaled_coords;
-            for (int d = 0; d < dim; d++)
-              node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
-
-            for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
-              A(eval_count, monomial_index) = patch_basis_funcs[monomial_index](node_scaled_coords);
-
-            eval_count++;
-          }
-          eval_dofs.insert(local_dof_indices[i]);
-        }
-      }
-
-      // Solve least-squares system
-      Vector<double> a(min_points);
-      Householder<double> QR(A);
-      double lsq_norm = QR.least_squares(a, rhs);
-
-      //std::cout << "Patch " << v << " LSQ norm = " << lsq_norm << std::endl;
 
       // Evaluate recovered solution polynomials at selected locations on patch
       // (nodes that are interior to edges attached to the patch-central vertex,
