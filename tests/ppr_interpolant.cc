@@ -393,5 +393,8 @@ int main()
   ppr_P1_interpolant_test_2D();
   ppr_P2_interpolant_test_2D();
   ppr_P1_interpolant_test_3D();
+  // TODO: 3D P2 doesn't pass yet. There is a conditioning issue at the patch
+  // centered on the vertex at the origin. Try making the patch larger, using
+  // a Legendre basis, or just adding support for integral least-squares.
   // ppr_P2_interpolant_test_3D();
 }
