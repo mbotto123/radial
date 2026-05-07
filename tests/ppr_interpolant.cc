@@ -27,9 +27,10 @@
 
 using namespace dealii;
 
-// Function to interpolate from
+// Functions to interpolate from
+
 template <int dim>
-class Solution : public Function<dim>
+class Quadratic : public Function<dim>
 {
 public:
   virtual double value(const Point<dim> &p,
@@ -37,27 +38,76 @@ public:
 };
 
 template<int dim>
-double Solution<dim>::value(const Point<dim> &p,
+double Quadratic<dim>::value(const Point<dim> &p,
                             const unsigned int /*component*/) const
 {
   if (dim == 2)
   {
     double x = p[0];
     double y = p[1];
-    return 1 - 3*x + 4*y + 2*x*x - 5*y*y + 7*x*y;
+
+    double linear = 1 - 3*x + 4*y;
+    double quadratic = 2*x*x  + 7*x*y - 5*y*y;
+
+    return linear + quadratic;
   }
   else if (dim == 3)
   {
     double x = p[0];
     double y = p[1];
     double z = p[2];
-    return 1 - 3*x + 4*y + z + 2*x*x - 5*y*y + 7*x*y + 6*x*z - 9*y*z + z*z;
+
+    double linear = 1 - 3*x + 4*y + z;
+    double quadratic = 2*x*x + 7*x*y + 6*x*z - 5*y*y - 9*y*z + z*z;
+
+    return linear + quadratic;
   }
 }
 
-void ppr_interpolant_test_2D()
+template <int dim>
+class Cubic : public Function<dim>
+{
+public:
+  virtual double value(const Point<dim> &p,
+                       const unsigned int component = 0) const override;
+};
+
+template<int dim>
+double Cubic<dim>::value(const Point<dim> &p,
+                            const unsigned int /*component*/) const
+{
+  if (dim == 2)
+  {
+    double x = p[0];
+    double y = p[1];
+
+    double linear = 1 - 3*x + 4*y;
+    double quadratic = 2*x*x  + 7*x*y - 5*y*y;
+    double cubic_x = 6*x*x*x + 10*x*x*y - 7*x*y*y;
+    double cubic_y = -y*y*y;
+
+    return linear + quadratic + cubic_x + cubic_y;
+  }
+  else if (dim == 3)
+  {
+    double x = p[0];
+    double y = p[1];
+    double z = p[2];
+
+    double linear = 1 - 3*x + 4*y + z;
+    double quadratic = 2*x*x + 7*x*y + 6*x*z - 5*y*y - 9*y*z + z*z;
+    double cubic_x = 6*x*x*x + 10*x*x*y + 2*x*x*z - 7*x*y*y  + x*y*z + 5*x*z*z;
+    double cubic_y = -y*y*y + 3*y*y*z;
+    double cubic_z = -5*y*z*z + 3*z*z*z;
+
+    return linear + quadratic + cubic_x + cubic_y + cubic_z;
+  }
+}
+
+void ppr_P1_interpolant_test_2D()
 {
   const int dim = 2;
+  const int order = 1;
 
   //-------------------------------------------------------------------------//  
   // Mesh
@@ -67,7 +117,6 @@ void ppr_interpolant_test_2D()
 
   //-------------------------------------------------------------------------//  
   // Base finite element field
-  const int order = 1;
   const FE_SimplexP<dim> fe(order);
   MappingP1<dim> mapping;
 
@@ -79,7 +128,7 @@ void ppr_interpolant_test_2D()
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
-  VectorTools::interpolate(dof_handler, Solution<dim>(), interpolant);
+  VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
   //-------------------------------------------------------------------------//  
 
   //-------------------------------------------------------------------------//  
@@ -111,7 +160,7 @@ void ppr_interpolant_test_2D()
   VectorTools::integrate_difference(mapping,
                                     dof_handler_enriched,
                                     interpolant_enriched,
-                                    Solution<dim>(),
+                                    Quadratic<dim>(),
                                     cell_errors,
                                     error_quadrature,
                                     norm);
@@ -120,15 +169,16 @@ void ppr_interpolant_test_2D()
                                                           norm);
 
   if (global_error < 1e-14)
-    std::cout << "2D Passed" << std::endl;
+    std::cout << "P1 2D Passed" << std::endl;
   else
-    std::cout << "2D Failed" << std::endl;
+    std::cout << "P1 2D Failed" << std::endl;
   //-------------------------------------------------------------------------//
 }
 
-void ppr_interpolant_test_3D()
+void ppr_P2_interpolant_test_2D()
 {
-  const int dim = 3;
+  const int dim = 2;
+  const int order = 2;
 
   //-------------------------------------------------------------------------//  
   // Mesh
@@ -138,7 +188,6 @@ void ppr_interpolant_test_3D()
 
   //-------------------------------------------------------------------------//  
   // Base finite element field
-  const int order = 1;
   const FE_SimplexP<dim> fe(order);
   MappingP1<dim> mapping;
 
@@ -150,7 +199,7 @@ void ppr_interpolant_test_3D()
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
-  VectorTools::interpolate(dof_handler, Solution<dim>(), interpolant);
+  VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
   //-------------------------------------------------------------------------//  
 
   //-------------------------------------------------------------------------//  
@@ -182,7 +231,7 @@ void ppr_interpolant_test_3D()
   VectorTools::integrate_difference(mapping,
                                     dof_handler_enriched,
                                     interpolant_enriched,
-                                    Solution<dim>(),
+                                    Quadratic<dim>(),
                                     cell_errors,
                                     error_quadrature,
                                     norm);
@@ -191,14 +240,158 @@ void ppr_interpolant_test_3D()
                                                           norm);
 
   if (global_error < 1e-14)
-    std::cout << "3D Passed" << std::endl;
+    std::cout << "P2 2D Passed" << std::endl;
   else
-    std::cout << "3D Failed" << std::endl;
+    std::cout << "P2 2D Failed" << std::endl;
+  //-------------------------------------------------------------------------//
+}
+
+void ppr_P1_interpolant_test_3D()
+{
+  const int dim = 3;
+  const int order = 1;
+
+  //-------------------------------------------------------------------------//  
+  // Mesh
+  Triangulation<dim> triangulation;
+  GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Base finite element field
+  const FE_SimplexP<dim> fe(order);
+  MappingP1<dim> mapping;
+
+  DoFHandler<dim> dof_handler(triangulation); 
+  dof_handler.distribute_dofs(fe);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Compute linear interpolant
+  Vector<double> interpolant(dof_handler.n_dofs());
+
+  VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Enriched finite element field
+  const int order_enriched = order + 1;
+  const FE_SimplexP<dim> fe_enriched(order_enriched);
+
+  DoFHandler<dim> dof_handler_enriched(triangulation); 
+  dof_handler_enriched.distribute_dofs(fe_enriched);
+  
+  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Solution recovery
+  radial::recover_solution_ppr(dof_handler, mapping, interpolant,
+                               dof_handler_enriched, interpolant_enriched);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//
+  // Compute error between enriched solution and exact solution
+  // (exact solution should be captured exactly by enriched solution)
+  VectorTools::NormType norm = VectorTools::L2_norm;
+
+  QGaussSimplex<dim> error_quadrature(order_enriched + 1);
+
+  Vector<double> cell_errors(triangulation.n_cells());
+
+  VectorTools::integrate_difference(mapping,
+                                    dof_handler_enriched,
+                                    interpolant_enriched,
+                                    Quadratic<dim>(),
+                                    cell_errors,
+                                    error_quadrature,
+                                    norm);
+  double global_error = VectorTools::compute_global_error(triangulation,
+                                                          cell_errors,
+                                                          norm);
+
+  if (global_error < 1e-14)
+    std::cout << "P1 3D Passed" << std::endl;
+  else
+    std::cout << "P1 3D Failed" << std::endl;
+  //-------------------------------------------------------------------------//
+}
+
+void ppr_P2_interpolant_test_3D()
+{
+  const int dim = 3;
+  const int order = 2;
+
+  //-------------------------------------------------------------------------//  
+  // Mesh
+  Triangulation<dim> triangulation;
+  GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Base finite element field
+  const FE_SimplexP<dim> fe(order);
+  MappingP1<dim> mapping;
+
+  DoFHandler<dim> dof_handler(triangulation); 
+  dof_handler.distribute_dofs(fe);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Compute linear interpolant
+  Vector<double> interpolant(dof_handler.n_dofs());
+
+  VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Enriched finite element field
+  const int order_enriched = order + 1;
+  const FE_SimplexP<dim> fe_enriched(order_enriched);
+
+  DoFHandler<dim> dof_handler_enriched(triangulation); 
+  dof_handler_enriched.distribute_dofs(fe_enriched);
+  
+  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//  
+  // Solution recovery
+  radial::recover_solution_ppr(dof_handler, mapping, interpolant,
+                               dof_handler_enriched, interpolant_enriched);
+  //-------------------------------------------------------------------------//  
+
+  //-------------------------------------------------------------------------//
+  // Compute error between enriched solution and exact solution
+  // (exact solution should be captured exactly by enriched solution)
+  VectorTools::NormType norm = VectorTools::L2_norm;
+
+  QGaussSimplex<dim> error_quadrature(order_enriched + 1);
+
+  Vector<double> cell_errors(triangulation.n_cells());
+
+  VectorTools::integrate_difference(mapping,
+                                    dof_handler_enriched,
+                                    interpolant_enriched,
+                                    Quadratic<dim>(),
+                                    cell_errors,
+                                    error_quadrature,
+                                    norm);
+  double global_error = VectorTools::compute_global_error(triangulation,
+                                                          cell_errors,
+                                                          norm);
+
+  if (global_error < 1e-14)
+    std::cout << "P2 3D Passed" << std::endl;
+  else
+    std::cout << "P2 3D Failed" << std::endl;
   //-------------------------------------------------------------------------//
 }
 
 int main()
 {
-  ppr_interpolant_test_2D();
-  ppr_interpolant_test_3D();
+  ppr_P1_interpolant_test_2D();
+  ppr_P2_interpolant_test_2D();
+  ppr_P1_interpolant_test_3D();
+  // ppr_P2_interpolant_test_3D();
 }
