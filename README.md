@@ -26,7 +26,7 @@ familiar with deal.ii can use these examples to see how radial is incoporated in
 To compile an example, start by creating a build directory and running CMake:
 
 ```
-mkdir build
+mkdir build && cd build
 cmake ..
 ```
 
