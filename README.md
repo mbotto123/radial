@@ -30,7 +30,7 @@ mkdir build && cd build
 cmake ..
 ```
 
-Then, run `make <example_name>.cc`. For example, to compile the $L^2$ projection adaptation example:
+Then, run `make <example_name>`. For example, to compile the $L^2$ projection adaptation example:
 
 ```
 make adapt_projection_2D
