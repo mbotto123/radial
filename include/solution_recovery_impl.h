@@ -144,7 +144,7 @@ namespace radial
       }
       else
       {
-        // deal.ii does not currently support >P3 triangles, so we cannot do
+        // deal.ii does not currently support >P3 simplices, so we cannot do
         // P3 to P4 enrichment
         Assert(order <= 2,
                ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet.")); 
@@ -165,10 +165,35 @@ namespace radial
         patch_basis_funcs[8] = [](Point<dim> psi){ return psi(1)*psi(2); };
         patch_basis_funcs[9] = [](Point<dim> psi){ return psi(2)*psi(2); };
       }
+      else if (order == 2)
+      {
+        patch_basis_funcs[0]  = [](Point<dim> psi){ return 1.0; };
+        patch_basis_funcs[1]  = [](Point<dim> psi){ return psi(0); };
+        patch_basis_funcs[2]  = [](Point<dim> psi){ return psi(1); };
+        patch_basis_funcs[3]  = [](Point<dim> psi){ return psi(2); };
+        patch_basis_funcs[4]  = [](Point<dim> psi){ return psi(0)*psi(0); };
+        patch_basis_funcs[5]  = [](Point<dim> psi){ return psi(0)*psi(1); };
+        patch_basis_funcs[6]  = [](Point<dim> psi){ return psi(0)*psi(2); };
+        patch_basis_funcs[7]  = [](Point<dim> psi){ return psi(1)*psi(1); };
+        patch_basis_funcs[8]  = [](Point<dim> psi){ return psi(1)*psi(2); };
+        patch_basis_funcs[9]  = [](Point<dim> psi){ return psi(2)*psi(2); };
+        patch_basis_funcs[10] = [](Point<dim> psi){ return psi(0)*psi(0)*psi(0); };
+        patch_basis_funcs[11] = [](Point<dim> psi){ return psi(0)*psi(0)*psi(1); };
+        patch_basis_funcs[12] = [](Point<dim> psi){ return psi(0)*psi(0)*psi(2); };
+        patch_basis_funcs[13] = [](Point<dim> psi){ return psi(0)*psi(1)*psi(1); };
+        patch_basis_funcs[14] = [](Point<dim> psi){ return psi(0)*psi(1)*psi(2); };
+        patch_basis_funcs[15] = [](Point<dim> psi){ return psi(0)*psi(2)*psi(2); };
+        patch_basis_funcs[16] = [](Point<dim> psi){ return psi(1)*psi(1)*psi(1); };
+        patch_basis_funcs[17] = [](Point<dim> psi){ return psi(1)*psi(1)*psi(2); };
+        patch_basis_funcs[18] = [](Point<dim> psi){ return psi(1)*psi(2)*psi(2); };
+        patch_basis_funcs[19] = [](Point<dim> psi){ return psi(2)*psi(2)*psi(2); };
+      }
       else
       {
-        Assert(order <= 1,
-               ExcMessage("Recovery not implemented beyond P1 in 3D."));
+        // deal.ii does not currently support >P3 simplices, so we cannot do
+        // P3 to P4 enrichment
+        Assert(order <= 2,
+               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet.")); 
       }
     }
     //-------------------------------------------------------------------------//
@@ -221,7 +246,7 @@ namespace radial
         }
       }
 
-      unsigned int npoints = patch_vertices.size();
+      unsigned int nverts = patch_vertices.size();
 
       // Vector of least-squares coefficients
       Vector<double> a(min_points);
@@ -231,13 +256,19 @@ namespace radial
 
       double lsq_norm;
 
+      // The residual norm value at which we consider least-squares to have failed.
+      // Needed to add this for 3D, because in 3D it was possible for a patch to have
+      // enough sampling points but still give an unacceptable least-squares result.
+      // TODO: Experiment with this value
+      double lsq_norm_tol = 1e0;
+
       // Try least-squares on baseline patch if it already has enough points.
       // If this is successful, then we don't need to grow the patch.
-      if (npoints > min_points)
+      if (patch_dofs.size() > min_points)
       {
         std::vector<std::vector<double>> coord_patch_vertices(dim);
         for (int d = 0; d < dim; d++)
-          coord_patch_vertices[d].resize(npoints);
+          coord_patch_vertices[d].resize(nverts);
 
         int vertex_count = 0;
         for (const auto& vertex : patch_vertices)
@@ -249,6 +280,8 @@ namespace radial
         }
 
         // Find limits of the bounding box that contains the patch
+        // TODO: For this to be valid on curved elements, this needs to be done
+        // with node coordinates, not vertex coordinates.
         for (int d = 0; d < dim; d++)
         {
           coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
@@ -299,18 +332,18 @@ namespace radial
         Householder<double> QR(A);
         lsq_norm = QR.least_squares(a, rhs);
       }
+      else
+      {
+        // If we don't have enough points to do least-squares yet, just set
+        // the least-squares norm to a value larger than the tolerance.
+        lsq_norm = 2 * lsq_norm_tol;
+      }
 
       int growth_iter = 0;
       const int max_iter = 3;
 
-      // The residual norm value at which we consider least-squares to have failed.
-      // Needed to add this for 3D, because in 3D it was possible for a patch to have
-      // enough sampling points but still give an unacceptable least-squares result.
-      // TODO: Experiment with this value
-      double lsq_norm_tol = 1e0;
-
-      while ((growth_iter < max_iter && npoints <= min_points_linear) ||
-             (lsq_norm > lsq_norm_tol))
+      while ((growth_iter < max_iter) &&
+             (nverts <= min_points_linear || lsq_norm > lsq_norm_tol))
       {
         // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
         for (const auto& neighbor : neighbors)
@@ -356,15 +389,15 @@ namespace radial
 
         neighbors = next_neighbors;
 
-        npoints = patch_vertices.size();
+        nverts = patch_vertices.size();
 
-        if (npoints > min_points)
+        if (patch_dofs.size() > min_points)
         {
           // If we have enough points, try least-squares and check residual norm
 
           std::vector<std::vector<double>> coord_patch_vertices(dim);
           for (int d = 0; d < dim; d++)
-            coord_patch_vertices[d].resize(npoints);
+            coord_patch_vertices[d].resize(nverts);
 
           int vertex_count = 0;
           for (const auto& vertex : patch_vertices)
@@ -376,6 +409,8 @@ namespace radial
           }
 
           // Find limits of the bounding box that contains the patch
+          // TODO: For this to be valid on curved elements, this needs to be done
+          // with node coordinates, not vertex coordinates.
           for (int d = 0; d < dim; d++)
           {
             coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
