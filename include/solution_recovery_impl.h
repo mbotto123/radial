@@ -28,14 +28,14 @@ namespace radial
                             const DoFHandler<dim>& dof_handler_enriched,
                             Vector<double>& solution_enriched)
   {
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Base finite element field
     const FiniteElement<dim>& fe = dof_handler.get_fe();
     const unsigned int order = fe.degree;
 
     const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
     std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-    
+
     // Reference coordinates of the Lagrange nodes
     // (also used to get the values of the base finite element field at those nodes)
     Quadrature<dim> lagrange_nodes(fe.get_unit_support_points());
@@ -46,9 +46,9 @@ namespace radial
 
     // Vector to store values at the Lagrange nodes of an element
     std::vector<double> solution_values(lagrange_nodes.size());
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Enriched finite element field
     const unsigned int order_enriched = order + 1;
     const FiniteElement<dim>& fe_enriched = dof_handler_enriched.get_fe();
@@ -62,7 +62,7 @@ namespace radial
                                            fe_enriched,
                                            lagrange_nodes_enriched,
                                            update_quadrature_points); // don't need values
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
 
     //-------------------------------------------------------------------------//
@@ -104,7 +104,7 @@ namespace radial
 
     //-------------------------------------------------------------------------//
     // Create monomial basis for least-squares fit
-   
+
     // Minimum number of sampling points required to get a solvable system on a patch
     unsigned int min_points;
     if (dim == 2)
@@ -115,9 +115,9 @@ namespace radial
     {
       min_points = (1.0/6.0) * (order_enriched + 1) * (order_enriched + 2) * (order_enriched + 3);
     }
-    
+
     std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(min_points);
-   
+
     if (dim == 2)
     {
       if (order == 1)
@@ -147,7 +147,7 @@ namespace radial
         // deal.ii does not currently support >P3 simplices, so we cannot do
         // P3 to P4 enrichment
         Assert(order <= 2,
-               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet.")); 
+               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet."));
       }
     }
     else if (dim == 3)
@@ -193,14 +193,14 @@ namespace radial
         // deal.ii does not currently support >P3 simplices, so we cannot do
         // P3 to P4 enrichment
         Assert(order <= 2,
-               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet.")); 
+               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet."));
       }
     }
     //-------------------------------------------------------------------------//
 
     //-------------------------------------------------------------------------//
     // Loop through vertices to construct recovery patches
-    
+
     unsigned int min_points_linear;
     if (dim == 2)
     {
@@ -216,9 +216,9 @@ namespace radial
     for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
     {
       std::set<typename DoFHandler<dim>::active_cell_iterator> patch_cells;
-      
+
       // Set to keep count of patch DOFs
-      std::set<types::global_dof_index> patch_dofs;                     
+      std::set<types::global_dof_index> patch_dofs;
 
       // Add cells that contain the central vertex to the patch
       for (const auto &cell: vertex_to_cell[v])
@@ -291,9 +291,9 @@ namespace radial
         // Create RHS and system matrix for discrete least-squares
         Vector<double> rhs(patch_dofs.size());
         FullMatrix<double> A(patch_dofs.size(), min_points);
-        
+
         // Discrete least-squares
-        
+
         std::set<types::global_dof_index> eval_dofs;
         unsigned int eval_count = 0;
         
@@ -383,7 +383,7 @@ namespace radial
           }
         }
 
-        // Update overall list of patch vertices 
+        // Update overall list of patch vertices
         for (const auto& next_neighbor : next_neighbors)
           patch_vertices.insert(next_neighbor);
 
@@ -420,12 +420,12 @@ namespace radial
           // Create RHS and system matrix for discrete least-squares
           Vector<double> rhs(patch_dofs.size());
           FullMatrix<double> A(patch_dofs.size(), min_points);
-          
+
           // Discrete least-squares
-          
+
           std::set<types::global_dof_index> eval_dofs;
           unsigned int eval_count = 0;
-          
+
           for (const auto &cell: patch_cells)
           {
             fe_values_nodes.reinit(cell);
@@ -472,7 +472,7 @@ namespace radial
       // Evaluate recovered solution polynomials at selected locations on patch
       // (nodes that are interior to edges attached to the patch-central vertex,
       // and cell nodes of cells that contain the patch-central vertex)
-      
+
       std::set<types::global_dof_index> eval_dofs_enriched;
 
       for (const auto &cell : vertex_to_cell_enriched[v])
@@ -501,7 +501,7 @@ namespace radial
         {
           // Node coordinates in reference space
           Point<dim> node_ref_coords = fe_enriched.unit_support_point(i);
-         
+
           std::vector<double> node_ref_barycentric(dim + 1);
           node_ref_barycentric[0] = 1.0;
           for (int d = 0; d < dim; d++)
@@ -511,13 +511,13 @@ namespace radial
           }
 
           double node_ref_barycentric_patch = node_ref_barycentric[central_vert_local_index];
-            
+
           Point<dim> node_physical_coords = fe_values_nodes_enriched.quadrature_point(i);
 
           Point<dim> node_scaled_coords;
           for (int d = 0; d < dim; d++)
             node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
-          
+
           double solution_enriched_node = 0;
           for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
             solution_enriched_node += a(monomial_index) * patch_basis_funcs[monomial_index](node_scaled_coords);

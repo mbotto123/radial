@@ -27,10 +27,10 @@
 
 using namespace dealii;
 
-//-------------------------------------------------------------------------//  
+//-------------------------------------------------------------------------//
 // L^2 Projection with uniform refinement. Solution recovery is performed
 // on the projected solution.
-//-------------------------------------------------------------------------//  
+//-------------------------------------------------------------------------//
 
 // Function to project from
 // Double boundary layer in 2D / Triple boundary layer in 3D
@@ -57,7 +57,7 @@ double Solution<dim>::value(const Point<dim> &p,
   Tensor<1, dim> a;
   for (int d = 0; d < dim; d++)
     a[d] = 1.0;
-  
+
   // Diffusion
   double nu = 1./30.;
 
@@ -76,7 +76,7 @@ Tensor<1, dim> Solution<dim>::gradient(const Point<dim> &p,
   Tensor<1, dim> a;
   for (int d = 0; d < dim; d++)
     a[d] = 1.0;
-  
+
   // Diffusion
   double nu = 1./30.;
 
@@ -85,7 +85,7 @@ Tensor<1, dim> Solution<dim>::gradient(const Point<dim> &p,
   for (int d = 0; d < dim; d++)
   {
     denom *= std::exp(a[d]/nu) - 1;
-    
+
     num[d] = a[d] * std::exp(a[d]*p[d]/nu);
 
     for (int dd = 0; dd < dim; dd++)
@@ -103,37 +103,37 @@ Tensor<1, dim> Solution<dim>::gradient(const Point<dim> &p,
 
 int main()
 {
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Run parameters
   const int dim = 2; 
-  
+
   const int order = 2;
 
   int max_level = 7;
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
   ConvergenceTable convergence_table;
   
   for (int level = 1; level < max_level; level++)
   {
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Mesh
     int repetitions = std::pow(2, level);
 
     Triangulation<dim> triangulation;
     GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, repetitions);
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Base finite element field
     const FE_SimplexP<dim> fe(order);
     MappingP1<dim> mapping;
 
     DoFHandler<dim> dof_handler(triangulation); 
     dof_handler.distribute_dofs(fe);
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Compute L2 projection
     Vector<double> solution(dof_handler.n_dofs());
 
@@ -143,26 +143,26 @@ int main()
 
     VectorTools::project(dof_handler, cm, QGaussSimplex<dim>(order + 2),
                          Solution<dim>(), solution);
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Enriched finite element field
     const int order_enriched = order + 1;
     const FE_SimplexP<dim> fe_enriched(order_enriched);
 
     DoFHandler<dim> dof_handler_enriched(triangulation); 
     dof_handler_enriched.distribute_dofs(fe_enriched);
-    
-    Vector<double> solution_enriched(dof_handler_enriched.n_dofs());
-    //-------------------------------------------------------------------------//  
 
-    //-------------------------------------------------------------------------//  
+    Vector<double> solution_enriched(dof_handler_enriched.n_dofs());
+    //-------------------------------------------------------------------------//
+
+    //-------------------------------------------------------------------------//
     // Solution recovery
     radial::recover_solution_ppr(dof_handler, mapping, solution,
                                  dof_handler_enriched, solution_enriched);
-    //-------------------------------------------------------------------------// 
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Compute L2 projection from enriched solution
     Vector<double> projection_from_enriched(dof_handler.n_dofs());
 
@@ -172,7 +172,7 @@ int main()
 
     VectorTools::project(dof_handler, cm, QGaussSimplex<dim>(order + 2),
                          fe_function_enriched, projection_from_enriched);
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     
     //-------------------------------------------------------------------------//
     // Compute error between enriched solution and exact solution
@@ -180,7 +180,7 @@ int main()
     QWitherdenVincentSimplex<dim> error_quadrature(order_enriched + 2);
 
     Vector<double> cell_errors(triangulation.n_cells());
-    
+
     VectorTools::integrate_difference(mapping,
                                       dof_handler,
                                       solution,
@@ -191,7 +191,7 @@ int main()
     double L2_error = VectorTools::compute_global_error(triangulation,
                                                         cell_errors,
                                                         VectorTools::L2_norm);
-  
+
     VectorTools::integrate_difference(mapping,
                                       dof_handler_enriched,
                                       solution_enriched,
@@ -202,7 +202,7 @@ int main()
     double L2_error_enriched = VectorTools::compute_global_error(triangulation,
                                                                  cell_errors,
                                                                  VectorTools::L2_norm);
-    
+
     VectorTools::integrate_difference(mapping,
                                       dof_handler,
                                       solution,
@@ -213,7 +213,7 @@ int main()
     double H1_error = VectorTools::compute_global_error(triangulation,
                                                         cell_errors,
                                                         VectorTools::H1_seminorm);
-    
+
     VectorTools::integrate_difference(mapping,
                                       dof_handler_enriched,
                                       solution_enriched,
@@ -224,7 +224,7 @@ int main()
     double H1_error_enriched = VectorTools::compute_global_error(triangulation,
                                                                  cell_errors,
                                                                  VectorTools::H1_seminorm);
-    
+
     // Compute L2 difference between enriched solution and projection from it
     VectorTools::integrate_difference(mapping,
                                       dof_handler,
@@ -237,7 +237,7 @@ int main()
                                                        cell_errors,
                                                        VectorTools::L2_norm);
     double theta_L2 = L2_diff / L2_error;
-    
+
     convergence_table.add_value("level", level);
     convergence_table.add_value("cells", triangulation.n_cells());
     convergence_table.add_value("dofs", dof_handler.n_dofs());
@@ -248,7 +248,7 @@ int main()
     convergence_table.add_value("theta_L2", theta_L2);
     //-------------------------------------------------------------------------//
   }
-  
+
   convergence_table.set_precision("L2", 3);
   convergence_table.set_precision("L2E", 3);
   convergence_table.set_precision("H1", 3);

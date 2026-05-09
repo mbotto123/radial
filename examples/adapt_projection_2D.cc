@@ -36,10 +36,10 @@
 
 using namespace dealii;
 
-//-------------------------------------------------------------------------//  
+//-------------------------------------------------------------------------//
 // L^2 Projection with mesh adaptation based on approximate L^2 error
 // control.
-//-------------------------------------------------------------------------//  
+//-------------------------------------------------------------------------//
 
 // Function to project from
 // DoubleBL in 2D / TripleBL in 3D
@@ -66,7 +66,7 @@ double Solution<dim>::value(const Point<dim> &p,
   Tensor<1, dim> a;
   for (int d = 0; d < dim; d++)
     a[d] = 1.0;
-  
+
   // Diffusion
   double nu = 1./30.;
 
@@ -85,7 +85,7 @@ Tensor<1, dim> Solution<dim>::gradient(const Point<dim> &p,
   Tensor<1, dim> a;
   for (int d = 0; d < dim; d++)
     a[d] = 1.0;
-  
+
   // Diffusion
   double nu = 1./30.;
 
@@ -94,7 +94,7 @@ Tensor<1, dim> Solution<dim>::gradient(const Point<dim> &p,
   for (int d = 0; d < dim; d++)
   {
     denom *= std::exp(a[d]/nu) - 1;
-    
+
     num[d] = a[d] * std::exp(a[d]*p[d]/nu);
 
     for (int dd = 0; dd < dim; dd++)
@@ -134,32 +134,32 @@ int main()
 {
   gmsh::initialize();
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Run parameters
 
   // Dimension has to be const!
   const int dim = 2;
-  
+
   int order = 1;
-  
+
   VectorTools::NormType norm = VectorTools::L2_norm;
   //VectorTools::NormType norm = VectorTools::H1_seminorm;
 
   // Chamoin and Legoll
   //double e_0 = 1e-3;
-  
+
   // Geuzaine Gmsh example
   double N = 4000;
 
   int num_iters = 5;
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Adaptation loop
 
   for (int adapt_iter = 0; adapt_iter < num_iters; adapt_iter++)
   {
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Mesh
     Triangulation<dim> triangulation;
 
@@ -176,32 +176,32 @@ int main()
       //std::string f("square.msh"); // read using Gmsh API
       gridin.read_msh(f);
     }
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
   
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Base finite element field
     const FE_SimplexP<dim> fe(order);
     MappingP1<dim> mapping;
 
     DoFHandler<dim> dof_handler(triangulation); 
     dof_handler.distribute_dofs(fe);
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Compute L2 projection
     Vector<double> solution(dof_handler.n_dofs());
 
     QGaussSimplex<dim> quadrature(order + 2);
-    
+
     // Empty constraints object (no constraints to enforce)
     AffineConstraints<double> cm;
     cm.close();
 
     VectorTools::project(dof_handler, cm, quadrature, 
                          Solution<dim>(), solution);
-    //-------------------------------------------------------------------------//  
-    
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
+
+    //-------------------------------------------------------------------------//
     // Enriched finite element field
     const int order_enriched = order + 1;
     const FE_SimplexP<dim> fe_enriched(order_enriched);
@@ -210,15 +210,15 @@ int main()
     dof_handler_enriched.distribute_dofs(fe_enriched);
     
     Vector<double> solution_enriched(dof_handler_enriched.n_dofs());
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Solution recovery
     radial::recover_solution_ppr(dof_handler, mapping, solution,
                                  dof_handler_enriched, solution_enriched);
-    //-------------------------------------------------------------------------// 
+    //-------------------------------------------------------------------------//
 
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
     // Compute L2 projection from enriched solution
     Vector<double> projection_from_enriched(dof_handler.n_dofs());
 
@@ -228,9 +228,9 @@ int main()
 
     VectorTools::project(dof_handler, cm, quadrature, 
                          fe_function_enriched, projection_from_enriched);
-    //-------------------------------------------------------------------------//  
-    
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
+
+    //-------------------------------------------------------------------------//
     // P1 finite element field for cell size transfer to nodes
     const FE_SimplexP<dim> fe_linear(1);
 
@@ -242,9 +242,9 @@ int main()
     const unsigned int dofs_per_cell_linear = fe_linear.n_dofs_per_cell();
     std::vector<types::global_dof_index> local_dof_indices_linear(dofs_per_cell_linear);
 
-    DoFHandler<dim> dof_handler_linear(triangulation); 
+    DoFHandler<dim> dof_handler_linear(triangulation);
     dof_handler_linear.distribute_dofs(fe_linear);
-    //-------------------------------------------------------------------------//  
+    //-------------------------------------------------------------------------//
   
     //-------------------------------------------------------------------------//
     // Compute cell-wise approximate L2 error 
@@ -269,7 +269,7 @@ int main()
     QWitherdenVincentSimplex<dim> error_quadrature(order_enriched + 2);
 
     Vector<double> cell_errors(triangulation.n_cells());
-    
+
     VectorTools::integrate_difference(mapping,
                                       dof_handler,
                                       solution,
@@ -303,7 +303,7 @@ int main()
     {
       // Chamoin and Legoll
       //global_factor += std::pow(eta(i), 2.0*dim / (2.0*rate + dim));
-      
+
       // Geuzaine Gmsh example
       global_factor += std::pow(eta(i), 2.0 / (1.0 + rate));
     }
@@ -323,13 +323,13 @@ int main()
     // Loop over elements and compute element size formula for new mesh
     // (WARNING: they add a square root on the squared cell-wise error)
     Vector<double> h_new(triangulation.n_cells());
-    
+
     for (unsigned int i = 0; i < triangulation.n_cells(); i++)
     {
       // Chamoin and Legoll
       //double local_term = std::pow(eta(i), 2.0 / (2.0*rate + dim));
       //double global_term = std::pow(global_factor, 1.0 / (2.0*rate));
-    
+
       //double r_K = std::pow(e_0, 1.0/rate) / (local_term * global_term);
       //h_new(i) = r_K * h_current(i);
 
@@ -343,9 +343,9 @@ int main()
 
     //-------------------------------------------------------------------------//
     // Transfer element size formula for new mesh to vertices of current mesh
-    
+
     Vector<double> h_new_nodes(dof_handler_linear.n_dofs());
- 
+
     DoFTools::distribute_cell_to_dof_vector(dof_handler_linear,
                                             h_new,
                                             h_new_nodes);
@@ -409,7 +409,7 @@ int main()
         break;
       }
     }
-    
+
     // DEBUG
     std::string pos_file_name = "square_" + std::to_string(adapt_iter) + ".pos";
     gmsh::view::write(bg_view, pos_file_name);
@@ -434,7 +434,7 @@ int main()
     }
     
     int bg_field = gmsh::model::mesh::field::add("PostView");
-   
+
     gmsh::model::mesh::field::setNumber(bg_field, "ViewIndex", bg_view);
     gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);
 
@@ -477,7 +477,7 @@ int main()
     }
 
   }
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
   gmsh::finalize();
 }

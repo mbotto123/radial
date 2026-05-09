@@ -21,9 +21,9 @@
 
 #include <solution_recovery.h>
 
-//-------------------------------------------------------------------------//  
+//-------------------------------------------------------------------------//
 // Test of solution recovery function
-//-------------------------------------------------------------------------//  
+//-------------------------------------------------------------------------//
 
 using namespace dealii;
 
@@ -109,44 +109,44 @@ void ppr_P1_interpolant_test_2D()
   const int dim = 2;
   const int order = 1;
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Mesh
   Triangulation<dim> triangulation;
   GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Base finite element field
   const FE_SimplexP<dim> fe(order);
   MappingP1<dim> mapping;
 
   DoFHandler<dim> dof_handler(triangulation); 
   dof_handler.distribute_dofs(fe);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
   VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Enriched finite element field
   const int order_enriched = order + 1;
   const FE_SimplexP<dim> fe_enriched(order_enriched);
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
   dof_handler_enriched.distribute_dofs(fe_enriched);
-  
-  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
-  //-------------------------------------------------------------------------//  
 
-  //-------------------------------------------------------------------------//  
+  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
   // Solution recovery
   radial::recover_solution_ppr(dof_handler, mapping, interpolant,
                                dof_handler_enriched, interpolant_enriched);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Compute error between enriched solution and exact solution
@@ -180,44 +180,44 @@ void ppr_P2_interpolant_test_2D()
   const int dim = 2;
   const int order = 2;
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Mesh
   Triangulation<dim> triangulation;
   GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Base finite element field
   const FE_SimplexP<dim> fe(order);
   MappingP1<dim> mapping;
 
   DoFHandler<dim> dof_handler(triangulation); 
   dof_handler.distribute_dofs(fe);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
   VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Enriched finite element field
   const int order_enriched = order + 1;
   const FE_SimplexP<dim> fe_enriched(order_enriched);
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
   dof_handler_enriched.distribute_dofs(fe_enriched);
-  
-  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
-  //-------------------------------------------------------------------------//  
 
-  //-------------------------------------------------------------------------//  
+  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
   // Solution recovery
   radial::recover_solution_ppr(dof_handler, mapping, interpolant,
                                dof_handler_enriched, interpolant_enriched);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Compute error between enriched solution and exact solution
@@ -251,44 +251,44 @@ void ppr_P1_interpolant_test_3D()
   const int dim = 3;
   const int order = 1;
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Mesh
   Triangulation<dim> triangulation;
   GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Base finite element field
   const FE_SimplexP<dim> fe(order);
   MappingP1<dim> mapping;
 
   DoFHandler<dim> dof_handler(triangulation); 
   dof_handler.distribute_dofs(fe);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
   VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Enriched finite element field
   const int order_enriched = order + 1;
   const FE_SimplexP<dim> fe_enriched(order_enriched);
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
   dof_handler_enriched.distribute_dofs(fe_enriched);
-  
-  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
-  //-------------------------------------------------------------------------//  
 
-  //-------------------------------------------------------------------------//  
+  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
   // Solution recovery
   radial::recover_solution_ppr(dof_handler, mapping, interpolant,
                                dof_handler_enriched, interpolant_enriched);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Compute error between enriched solution and exact solution
@@ -322,44 +322,44 @@ void ppr_P2_interpolant_test_3D()
   const int dim = 3;
   const int order = 2;
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Mesh
   Triangulation<dim> triangulation;
   GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Base finite element field
   const FE_SimplexP<dim> fe(order);
   MappingP1<dim> mapping;
 
   DoFHandler<dim> dof_handler(triangulation); 
   dof_handler.distribute_dofs(fe);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
   VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
   // Enriched finite element field
   const int order_enriched = order + 1;
   const FE_SimplexP<dim> fe_enriched(order_enriched);
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
   dof_handler_enriched.distribute_dofs(fe_enriched);
-  
-  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
-  //-------------------------------------------------------------------------//  
 
-  //-------------------------------------------------------------------------//  
+  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
   // Solution recovery
   radial::recover_solution_ppr(dof_handler, mapping, interpolant,
                                dof_handler_enriched, interpolant_enriched);
-  //-------------------------------------------------------------------------//  
+  //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Compute error between enriched solution and exact solution
