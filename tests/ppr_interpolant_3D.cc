@@ -29,7 +29,7 @@
 
 using namespace dealii;
 
-void ppr_P1_interpolant_test_3D()
+void ppr_interpolant_test_P1_3D()
 {
   const int dim = 3;
   const int order = 1;
@@ -128,7 +128,7 @@ void ppr_P1_interpolant_test_3D()
   //-------------------------------------------------------------------------//
 }
 
-void ppr_P2_interpolant_test_3D()
+void ppr_interpolant_test_P2_3D()
 {
   const int dim = 3;
   const int order = 2;
@@ -239,9 +239,9 @@ void ppr_P2_interpolant_test_3D()
 
 int main()
 {
-  ppr_P1_interpolant_test_3D();
+  ppr_interpolant_test_P1_3D();
   // TODO: 3D P2 doesn't pass yet. There is a conditioning issue.
   // Try making the patch larger, using a Legendre basis, or just adding support
   // for integral least-squares.
-  ppr_P2_interpolant_test_3D(); // fails!
+  ppr_interpolant_test_P2_3D(); // fails!
 }

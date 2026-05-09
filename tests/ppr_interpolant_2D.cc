@@ -29,7 +29,7 @@
 
 using namespace dealii;
 
-void ppr_P1_interpolant_test_2D()
+void ppr_interpolant_test_P1_2D()
 {
   const int dim = 2;
   const int order = 1;
@@ -121,7 +121,7 @@ void ppr_P1_interpolant_test_2D()
   //-------------------------------------------------------------------------//
 }
 
-void ppr_P2_interpolant_test_2D()
+void ppr_interpolant_test_P2_2D()
 {
   const int dim = 2;
   const int order = 2;
@@ -219,6 +219,6 @@ void ppr_P2_interpolant_test_2D()
 
 int main()
 {
-  ppr_P1_interpolant_test_2D();
-  ppr_P2_interpolant_test_2D();
+  ppr_interpolant_test_P1_2D();
+  ppr_interpolant_test_P2_2D();
 }
