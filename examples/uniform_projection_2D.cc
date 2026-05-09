@@ -105,7 +105,7 @@ int main()
 {
   //-------------------------------------------------------------------------//
   // Run parameters
-  const int dim = 2; 
+  const int dim = 2;
 
   const int order = 2;
 
