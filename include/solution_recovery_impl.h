@@ -21,13 +21,17 @@ namespace radial
 {
   using namespace dealii;
 
-  // TODO: use MappingFE to allow for isoparametric
   template <int dim>
   void recover_solution_ppr(const DoFHandler<dim>& dof_handler, const MappingP1<dim>& mapping,
                             const Vector<double>& solution,
                             const DoFHandler<dim>& dof_handler_enriched,
                             Vector<double>& solution_enriched)
   {
+    // TODO: There should be a check for whether or not the mesh contains any
+    // curved elements. If it does, then MappingFE should be used. Currently,
+    // since MappingP1 is hardcoded, this function assumes straight-sided
+    // elements.
+
     //-------------------------------------------------------------------------//
     // Base finite element field
     const FiniteElement<dim>& fe = dof_handler.get_fe();
