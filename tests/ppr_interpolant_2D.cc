@@ -11,6 +11,8 @@
 #include <deal.II/base/quadrature_lib.h>
 
 #include <deal.II/base/function.h>
+#include <deal.II/base/function_lib.h>
+#include <deal.II/base/table.h>
 
 #include <deal.II/lac/vector.h>
 #include <deal.II/numerics/vector_tools.h>
@@ -27,87 +29,32 @@
 
 using namespace dealii;
 
-// Functions to interpolate from
-
-template <int dim>
-class Quadratic : public Function<dim>
-{
-public:
-  virtual double value(const Point<dim> &p,
-                       const unsigned int component = 0) const override;
-};
-
-template<int dim>
-double Quadratic<dim>::value(const Point<dim> &p,
-                            const unsigned int /*component*/) const
-{
-  if (dim == 2)
-  {
-    double x = p[0];
-    double y = p[1];
-
-    double linear = 1 - 3*x + 4*y;
-    double quadratic = 2*x*x  + 7*x*y - 5*y*y;
-
-    return linear + quadratic;
-  }
-  else if (dim == 3)
-  {
-    double x = p[0];
-    double y = p[1];
-    double z = p[2];
-
-    double linear = 1 - 3*x + 4*y + z;
-    double quadratic = 2*x*x + 7*x*y + 6*x*z - 5*y*y - 9*y*z + z*z;
-
-    return linear + quadratic;
-  }
-}
-
-template <int dim>
-class Cubic : public Function<dim>
-{
-public:
-  virtual double value(const Point<dim> &p,
-                       const unsigned int component = 0) const override;
-};
-
-template<int dim>
-double Cubic<dim>::value(const Point<dim> &p,
-                            const unsigned int /*component*/) const
-{
-  if (dim == 2)
-  {
-    double x = p[0];
-    double y = p[1];
-
-    double linear = 1 - 3*x + 4*y;
-    double quadratic = 2*x*x  + 7*x*y - 5*y*y;
-    double cubic_x = 6*x*x*x + 10*x*x*y - 7*x*y*y;
-    double cubic_y = -y*y*y;
-
-    return linear + quadratic + cubic_x + cubic_y;
-  }
-  else if (dim == 3)
-  {
-    double x = p[0];
-    double y = p[1];
-    double z = p[2];
-
-    double linear = 1 - 3*x + 4*y + z;
-    double quadratic = 2*x*x + 7*x*y + 6*x*z - 5*y*y - 9*y*z + z*z;
-    double cubic_x = 6*x*x*x + 10*x*x*y + 2*x*x*z - 7*x*y*y  + x*y*z + 5*x*z*z;
-    double cubic_y = -y*y*y + 3*y*y*z;
-    double cubic_z = -5*y*z*z + 3*z*z*z;
-
-    return linear + quadratic + cubic_x + cubic_y + cubic_z;
-  }
-}
-
 void ppr_P1_interpolant_test_2D()
 {
   const int dim = 2;
   const int order = 1;
+
+  //-------------------------------------------------------------------------//
+  // Function to interpolate from
+  const int order_enriched = order + 1;
+
+  const int basis_size = 0.5 * (order_enriched + 1) * (order_enriched + 2);
+
+  // Monomial coefficients
+  std::vector<double> coeffs(basis_size);
+  coeffs = {1, -3, 4, 2, 7, -5};
+
+  // Monomial exponents
+  const double exponents_array[] = {0, 0,  // x^0 y^0
+                                    1, 0,  // x^1 y^0
+                                    0, 1,  // x^0 y^1
+                                    2, 0,  // x^2 y^0
+                                    1, 1,  // x^1 y^1
+                                    0, 2}; // x^0 y^2
+  Table<2, double> exponents(basis_size, dim, exponents_array);
+
+  Functions::Polynomial<dim> quadratic(exponents, coeffs);
+  //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Mesh
@@ -128,12 +75,11 @@ void ppr_P1_interpolant_test_2D()
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
-  VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
+  VectorTools::interpolate(dof_handler, quadratic, interpolant);
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Enriched finite element field
-  const int order_enriched = order + 1;
   const FE_SimplexP<dim> fe_enriched(order_enriched);
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
@@ -160,7 +106,7 @@ void ppr_P1_interpolant_test_2D()
   VectorTools::integrate_difference(mapping,
                                     dof_handler_enriched,
                                     interpolant_enriched,
-                                    Quadratic<dim>(),
+                                    quadratic,
                                     cell_errors,
                                     error_quadrature,
                                     norm);
@@ -181,6 +127,32 @@ void ppr_P2_interpolant_test_2D()
   const int order = 2;
 
   //-------------------------------------------------------------------------//
+  // Function to interpolate from
+  const int order_enriched = order + 1;
+
+  const int basis_size = 0.5 * (order_enriched + 1) * (order_enriched + 2);
+
+  // Monomial coefficients
+  std::vector<double> coeffs(basis_size);
+  coeffs = {1, -3, 4, 2, 7, -5, 6, 10, -7, -1};
+
+  // Monomial exponents
+  const double exponents_array[] = {0, 0,  // x^0 y^0
+                                    1, 0,  // x^1 y^0
+                                    0, 1,  // x^0 y^1
+                                    2, 0,  // x^2 y^0
+                                    1, 1,  // x^1 y^1
+                                    0, 2,  // x^0 y^2
+                                    3, 0,  // x^3 y^0
+                                    2, 1,  // x^2 y^1
+                                    1, 2,  // x^2 y^2
+                                    0, 3}; // x^0 y^3
+  Table<2, double> exponents(basis_size, dim, exponents_array);
+
+  Functions::Polynomial<dim> cubic(exponents, coeffs);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
   // Mesh
   Triangulation<dim> triangulation;
   GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
@@ -199,12 +171,11 @@ void ppr_P2_interpolant_test_2D()
   // Compute linear interpolant
   Vector<double> interpolant(dof_handler.n_dofs());
 
-  VectorTools::interpolate(dof_handler, Quadratic<dim>(), interpolant);
+  VectorTools::interpolate(dof_handler, cubic, interpolant);
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
   // Enriched finite element field
-  const int order_enriched = order + 1;
   const FE_SimplexP<dim> fe_enriched(order_enriched);
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
@@ -231,7 +202,7 @@ void ppr_P2_interpolant_test_2D()
   VectorTools::integrate_difference(mapping,
                                     dof_handler_enriched,
                                     interpolant_enriched,
-                                    Quadratic<dim>(),
+                                    cubic,
                                     cell_errors,
                                     error_quadrature,
                                     norm);

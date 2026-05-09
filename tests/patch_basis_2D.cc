@@ -1,4 +1,6 @@
 #include <deal.II/base/function.h>
+#include <deal.II/base/function_lib.h>
+#include <deal.II/base/table.h>
 
 #include <deal.II/lac/vector.h>
 
@@ -12,81 +14,6 @@
 //-------------------------------------------------------------------------//
 
 using namespace dealii;
-
-template <int dim>
-class Quadratic : public Function<dim>
-{
-public:
-  virtual double value(const Point<dim> &p,
-                       const unsigned int component = 0) const override;
-};
-
-template<int dim>
-double Quadratic<dim>::value(const Point<dim> &p,
-                            const unsigned int /*component*/) const
-{
-  if (dim == 2)
-  {
-    double x = p[0];
-    double y = p[1];
-
-    double linear = 1 - 3*x + 4*y;
-    double quadratic = 2*x*x  + 7*x*y - 5*y*y;
-
-    return linear + quadratic;
-  }
-  else if (dim == 3)
-  {
-    double x = p[0];
-    double y = p[1];
-    double z = p[2];
-
-    double linear = 1 - 3*x + 4*y + z;
-    double quadratic = 2*x*x + 7*x*y + 6*x*z - 5*y*y - 9*y*z + z*z;
-
-    return linear + quadratic;
-  }
-}
-
-template <int dim>
-class Cubic : public Function<dim>
-{
-public:
-  virtual double value(const Point<dim> &p,
-                       const unsigned int component = 0) const override;
-};
-
-template<int dim>
-double Cubic<dim>::value(const Point<dim> &p,
-                            const unsigned int /*component*/) const
-{
-  if (dim == 2)
-  {
-    double x = p[0];
-    double y = p[1];
-
-    double linear = 1 - 3*x + 4*y;
-    double quadratic = 2*x*x  + 7*x*y - 5*y*y;
-    double cubic_x = 6*x*x*x + 10*x*x*y - 7*x*y*y;
-    double cubic_y = -y*y*y;
-
-    return linear + quadratic + cubic_x + cubic_y;
-  }
-  else if (dim == 3)
-  {
-    double x = p[0];
-    double y = p[1];
-    double z = p[2];
-
-    double linear = 1 - 3*x + 4*y + z;
-    double quadratic = 2*x*x + 7*x*y + 6*x*z - 5*y*y - 9*y*z + z*z;
-    double cubic_x = 6*x*x*x + 10*x*x*y + 2*x*x*z - 7*x*y*y  + x*y*z + 5*x*z*z;
-    double cubic_y = -y*y*y + 3*y*y*z;
-    double cubic_z = -5*y*z*z + 3*z*z*z;
-
-    return linear + quadratic + cubic_x + cubic_y + cubic_z;
-  }
-}
 
 void patch_basis_test_P2_2D()
 {
@@ -106,16 +33,21 @@ void patch_basis_test_P2_2D()
 
   radial::create_patch_basis(order, patch_basis_funcs);
 
-  // Coefficients to match the exact function we're testing against
-  Vector<double> coeffs(basis_size);
-  coeffs(0) =  1;
-  coeffs(1) = -3;
-  coeffs(2) =  4;
-  coeffs(3) =  2;
-  coeffs(4) =  7;
-  coeffs(5) = -5;
+  // Monomial coefficients
+  std::vector<double> coeffs(basis_size);
+  coeffs = {1, -3, 4, 2, 7, -5};
 
-  Quadratic<dim> exact_func;
+  // Monomial exponents
+  const double exponents_array[] = {0, 0,  // x^0 y^0
+                                    1, 0,  // x^1 y^0
+                                    0, 1,  // x^0 y^1
+                                    2, 0,  // x^2 y^0
+                                    1, 1,  // x^1 y^1
+                                    0, 2}; // x^0 y^2
+  Table<2, double> exponents(basis_size, dim, exponents_array);
+
+  // Exact function to test against
+  Functions::Polynomial<dim> exact_func(exponents, coeffs);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -124,7 +56,7 @@ void patch_basis_test_P2_2D()
 
   double test_val = 0;
   for (unsigned int i = 0; i < basis_size; i++)
-    test_val += coeffs(i) * patch_basis_funcs[i](test_point);
+    test_val += coeffs[i] * patch_basis_funcs[i](test_point);
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
 
@@ -152,20 +84,25 @@ void patch_basis_test_P3_2D()
 
   radial::create_patch_basis(order, patch_basis_funcs);
 
-  // Coefficients to match the exact function we're testing against
-  Vector<double> coeffs(basis_size);
-  coeffs(0) =  1;
-  coeffs(1) = -3;
-  coeffs(2) =  4;
-  coeffs(3) =  2;
-  coeffs(4) =  7;
-  coeffs(5) = -5;
-  coeffs(6) =  6;
-  coeffs(7) = 10;
-  coeffs(8) = -7;
-  coeffs(9) = -1;
+  // Monomial coefficients
+  std::vector<double> coeffs(basis_size);
+  coeffs = {1, -3, 4, 2, 7, -5, 6, 10, -7, -1};
 
-  Cubic<dim> exact_func;
+  // Monomial exponents
+  const double exponents_array[] = {0, 0,  // x^0 y^0
+                                    1, 0,  // x^1 y^0
+                                    0, 1,  // x^0 y^1
+                                    2, 0,  // x^2 y^0
+                                    1, 1,  // x^1 y^1
+                                    0, 2,  // x^0 y^2
+                                    3, 0,  // x^3 y^0
+                                    2, 1,  // x^2 y^1
+                                    1, 2,  // x^2 y^2
+                                    0, 3}; // x^0 y^3
+  Table<2, double> exponents(basis_size, dim, exponents_array);
+
+  // Exact function to test against
+  Functions::Polynomial<dim> exact_func(exponents, coeffs);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -174,7 +111,7 @@ void patch_basis_test_P3_2D()
 
   double test_val = 0;
   for (unsigned int i = 0; i < basis_size; i++)
-    test_val += coeffs(i) * patch_basis_funcs[i](test_point);
+    test_val += coeffs[i] * patch_basis_funcs[i](test_point);
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
 
