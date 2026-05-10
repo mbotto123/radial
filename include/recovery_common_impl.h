@@ -1,4 +1,8 @@
 #include <deal.II/base/point.h>
+#include <deal.II/base/table.h>
+
+// Uncomment if adding Legendre basis option later
+// #include <gsl/gsl_sf_legendre.h>
 
 // Common functions used by recovery methods
 
@@ -90,5 +94,158 @@ namespace radial
                ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet."));
       }
     }
+
+    // Testing Legendre basis. This didn't end up helping with conditioning
+    // when the patch was too small, but leaving it commented in here so that
+    // it can be potentially incorporated as an option.
+    /*
+    const unsigned int basis_order = order + 1;
+
+    if (dim == 2)
+    {
+      const unsigned int basis_size = 0.5 * (basis_order + 1) * (basis_order + 2);
+
+      if (order == 1)
+      {
+        const int leg_indices_array[] = {0, 0,
+                                         1, 0,
+                                         0, 1,
+                                         2, 0,
+                                         1, 1,
+                                         0, 2};
+        Table<2, int> leg_indices(basis_size, dim, leg_indices_array);
+
+        for (unsigned int i = 0; i < basis_size; i++)
+        {
+          // TODO: Table can't be captured by reference? Try to replace with
+          // something else that can be captured by reference?
+          patch_basis_funcs[i] = [leg_indices, i](Point<dim> psi){
+            double basis_term = 1;
+            for (int d = 0; d < dim; d++)
+            {
+              basis_term *= gsl_sf_legendre_Pl(leg_indices[i][d], psi(d));
+            }
+            return basis_term;
+          };
+        }
+      }
+      else if (order == 2)
+      {
+        const int leg_indices_array[] = {0, 0,
+                                         1, 0,
+                                         0, 1,
+                                         2, 0,
+                                         1, 1,
+                                         0, 2,
+                                         3, 0,
+                                         2, 1,
+                                         1, 2,
+                                         0, 3};
+        Table<2, int> leg_indices(basis_size, dim, leg_indices_array);
+
+        for (unsigned int i = 0; i < basis_size; i++)
+        {
+          // TODO: Table can't be captured by reference? Try to replace with
+          // something else that can be captured by reference?
+          patch_basis_funcs[i] = [leg_indices, i](Point<dim> psi){
+            double basis_term = 1;
+            for (int d = 0; d < dim; d++)
+            {
+              basis_term *= gsl_sf_legendre_Pl(leg_indices[i][d], psi(d));
+            }
+            return basis_term;
+          };
+        }
+      }
+      else
+      {
+        // deal.ii does not currently support >P3 simplices, so we cannot do
+        // P3 to P4 enrichment
+        Assert(order <= 2,
+               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet."));
+      }
+    }
+    else if (dim == 3)
+    {
+      const unsigned int basis_size = (1.0/6.0) *
+                                      (basis_order + 1) *
+                                      (basis_order + 2) *
+                                      (basis_order + 3);
+
+      if (order == 1)
+      {
+        const int leg_indices_array[] = {0, 0, 0,
+                                         1, 0, 0,
+                                         0, 1, 0,
+                                         0, 0, 1,
+                                         2, 0, 0,
+                                         1, 1, 0,
+                                         1, 0, 1,
+                                         0, 2, 0,
+                                         0, 1, 1,
+                                         0, 0, 2};
+        Table<2, int> leg_indices(basis_size, dim, leg_indices_array);
+
+        for (unsigned int i = 0; i < basis_size; i++)
+        {
+          // TODO: Table can't be captured by reference? Try to replace with
+          // something else that can be captured by reference?
+          patch_basis_funcs[i] = [leg_indices, i](Point<dim> psi){
+            double basis_term = 1;
+            for (int d = 0; d < dim; d++)
+            {
+              basis_term *= gsl_sf_legendre_Pl(leg_indices[i][d], psi(d));
+            }
+            return basis_term;
+          };
+        }
+      }
+      else if (order == 2)
+      {
+        const int leg_indices_array[] = {0, 0, 0,
+                                         1, 0, 0,
+                                         0, 1, 0,
+                                         0, 0, 1,
+                                         2, 0, 0,
+                                         1, 1, 0,
+                                         1, 0, 1,
+                                         0, 2, 0,
+                                         0, 1, 1,
+                                         0, 0, 2,
+                                         3, 0, 0,
+                                         2, 1, 0,
+                                         2, 0, 1,
+                                         1, 2, 0,
+                                         1, 1, 1,
+                                         1, 0, 2,
+                                         0, 3, 0,
+                                         0, 2, 1,
+                                         0, 1, 2,
+                                         0, 0, 3};
+        Table<2, int> leg_indices(basis_size, dim, leg_indices_array);
+
+        for (unsigned int i = 0; i < basis_size; i++)
+        {
+          // TODO: Table can't be captured by reference? Try to replace with
+          // something else that can be captured by reference?
+          patch_basis_funcs[i] = [leg_indices, i](Point<dim> psi){
+            double basis_term = 1;
+            for (int d = 0; d < dim; d++)
+            {
+              basis_term *= gsl_sf_legendre_Pl(leg_indices[i][d], psi(d));
+            }
+            return basis_term;
+          };
+        }
+      }
+      else
+      {
+        // deal.ii does not currently support >P3 simplices, so we cannot do
+        // P3 to P4 enrichment
+        Assert(order <= 2,
+               ExcMessage("Recovery not possible beyond P2 because deal.ii doesn't support >P3 simplices yet."));
+      }
+    }
+    */
   }
 } // namespace radial
