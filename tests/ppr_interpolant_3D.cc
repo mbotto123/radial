@@ -240,8 +240,5 @@ void ppr_interpolant_test_P2_3D()
 int main()
 {
   ppr_interpolant_test_P1_3D();
-  // TODO: 3D P2 doesn't pass yet. There is a conditioning issue.
-  // Try making the patch larger, using a Legendre basis, or just adding support
-  // for integral least-squares.
-  ppr_interpolant_test_P2_3D(); // fails!
+  ppr_interpolant_test_P2_3D();
 }

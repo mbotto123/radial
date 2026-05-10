@@ -17,6 +17,10 @@
 #include <set>
 #include <functional>
 
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_linalg.h>
+
 #include <recovery_common.h>
 
 namespace radial
@@ -183,16 +187,17 @@ namespace radial
       // Points to store coordinates of patch bounding box
       Point<dim> coord_min, coord_max;
 
-      double lsq_norm;
+      // Reciprocal condition number of the least-squares system on the patch
+      double rcond;
 
-      // The residual norm value at which we consider least-squares to have failed.
-      // Needed to add this for 3D, because in 3D it was possible for a patch to have
-      // enough sampling points but still give an unacceptable least-squares result.
-      // TODO: Experiment with this value
-      double lsq_norm_tol = 1e0;
+      // The reciprocal condition number value at which we consider the
+      // least-squares system to be too ill-conditioned to attempt solving.
+      double rcond_tol = std::numeric_limits<double>::epsilon();
 
-      // Try least-squares on baseline patch if it already has enough points.
-      // If this is successful, then we don't need to grow the patch.
+      // Try least-squares on baseline patch if it already has enough points to
+      // create a solvable least-squares system. If this is successful, i.e. if
+      // the system is well-conditioned enough, then we don't need to grow the
+      // patch at all.
       if (patch_dofs.size() > min_points)
       {
         std::vector<std::vector<double>> coord_patch_vertices(dim);
@@ -217,9 +222,11 @@ namespace radial
           coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
         }
 
-        // Create RHS and system matrix for discrete least-squares
-        Vector<double> rhs(patch_dofs.size());
-        FullMatrix<double> A(patch_dofs.size(), min_points);
+        // Create RHS and system matrix for discrete least-squares. We use GSL
+        // so that condition number estimation can be done once the system
+        // matrix is filled.
+        gsl_vector *rhs = gsl_vector_alloc(patch_dofs.size());
+        gsl_matrix *A = gsl_matrix_alloc(patch_dofs.size(), min_points);
 
         // Discrete least-squares
 
@@ -240,7 +247,7 @@ namespace radial
             if (eval_dofs.count(local_dof_indices[i]) < 1) // if no one has sampled at this node yet
             {
               // Sample solution at the patch node
-              rhs(eval_count) = solution_values[i];
+              gsl_vector_set(rhs, eval_count, solution_values[i]);
 
               Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
 
@@ -249,7 +256,10 @@ namespace radial
                 node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
 
               for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
-                A(eval_count, monomial_index) = patch_basis_funcs[monomial_index](node_scaled_coords);
+              {
+                gsl_matrix_set(A, eval_count, monomial_index,
+                               patch_basis_funcs[monomial_index](node_scaled_coords));
+              }
 
               eval_count++;
             }
@@ -257,22 +267,54 @@ namespace radial
           }
         }
 
-        // Solve least-squares system
-        Householder<double> QR(A);
-        lsq_norm = QR.least_squares(a, rhs);
+        // Compute QR decomposition of least-squares system matrix
+        gsl_matrix *T = gsl_matrix_alloc(min_points, min_points);
+        gsl_linalg_QR_decomp_r(A, T);
+
+        // Estimate reciprocal condition number
+        gsl_vector *work = gsl_vector_alloc(3 * min_points);
+        gsl_linalg_QR_rcond(A, &rcond, work);
+        gsl_vector_free(work);
+
+        // If the condition number is good enough, solve the system
+        if (rcond > rcond_tol)
+        {
+          // The solution only actually has size N, but GSL asks for
+          // this input to have size M. The entries beyond N-1 store a vector
+          // that can be used to compute the least-squares residual norm.
+          gsl_vector *x = gsl_vector_alloc(patch_dofs.size());
+
+          gsl_vector *work = gsl_vector_alloc(min_points);
+          gsl_linalg_QR_lssolve_r(A, T, rhs, x, work);
+          gsl_vector_free(work);
+
+          // Copy solution into deal.ii Vector
+          for (unsigned int i = 0; i < min_points; i++)
+            a(i) = gsl_vector_get(x, i);
+
+          gsl_vector_free(x);
+        }
+
+        gsl_matrix_free(A);
+        gsl_matrix_free(T);
+        gsl_vector_free(rhs);
       }
       else
       {
         // If we don't have enough points to do least-squares yet, just set
-        // the least-squares norm to a value larger than the tolerance.
-        lsq_norm = 2 * lsq_norm_tol;
+        // the reciprocal condition number to zero to indicate that we don't
+        // have a solvable system yet. There's no way to estimate it since we
+        // can't even construct a least-squares system yet.
+        rcond = 0;
       }
 
       int growth_iter = 0;
       const int max_iter = 3;
 
+      // TODO: Optionally add an additional check based on the size of the
+      // least-squares residual norm? User could provide an acceptable tolerance.
       while ((growth_iter < max_iter) &&
-             (nverts <= min_points_linear || lsq_norm > lsq_norm_tol))
+             (nverts <= min_points_linear || rcond < rcond_tol))
       {
         // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
         for (const auto& neighbor : neighbors)
@@ -346,9 +388,11 @@ namespace radial
             coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
           }
 
-          // Create RHS and system matrix for discrete least-squares
-          Vector<double> rhs(patch_dofs.size());
-          FullMatrix<double> A(patch_dofs.size(), min_points);
+          // Create RHS and system matrix for discrete least-squares. We use GSL
+          // so that condition number estimation can be done once the system
+          // matrix is filled.
+          gsl_vector *rhs = gsl_vector_alloc(patch_dofs.size());
+          gsl_matrix *A = gsl_matrix_alloc(patch_dofs.size(), min_points);
 
           // Discrete least-squares
 
@@ -369,7 +413,7 @@ namespace radial
               if (eval_dofs.count(local_dof_indices[i]) < 1) // if no one has sampled at this node yet
               {
                 // Sample solution at the patch node
-                rhs(eval_count) = solution_values[i];
+                gsl_vector_set(rhs, eval_count, solution_values[i]);
 
                 Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
 
@@ -378,25 +422,58 @@ namespace radial
                   node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
 
                 for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
-                  A(eval_count, monomial_index) = patch_basis_funcs[monomial_index](node_scaled_coords);
-
+                {
+                  gsl_matrix_set(A, eval_count, monomial_index,
+                                patch_basis_funcs[monomial_index](node_scaled_coords));
+                }
                 eval_count++;
               }
               eval_dofs.insert(local_dof_indices[i]);
             }
           }
 
-          // Solve least-squares system
-          Householder<double> QR(A);
-          lsq_norm = QR.least_squares(a, rhs);
+          // Compute QR decomposition of least-squares system matrix
+          gsl_matrix *T = gsl_matrix_alloc(min_points, min_points);
+          gsl_linalg_QR_decomp_r(A, T);
+
+          // Estimate reciprocal condition number
+          gsl_vector *work = gsl_vector_alloc(3 * min_points);
+          gsl_linalg_QR_rcond(A, &rcond, work);
+          gsl_vector_free(work);
+
+          // If the condition number is good enough, solve the system
+          if (rcond > rcond_tol)
+          {
+            // The solution only actually has size N, but GSL asks for
+            // this input to have size M. The entries beyond N-1 store a vector
+            // that can be used to compute the least-squares residual norm.
+            gsl_vector *x = gsl_vector_alloc(patch_dofs.size());
+
+            gsl_vector *work = gsl_vector_alloc(min_points);
+            gsl_linalg_QR_lssolve_r(A, T, rhs, x, work);
+            gsl_vector_free(work);
+
+            // Copy solution into deal.ii Vector
+            for (unsigned int i = 0; i < min_points; i++)
+              a(i) = gsl_vector_get(x, i);
+
+            gsl_vector_free(x);
+          }
+
+          gsl_matrix_free(A);
+          gsl_matrix_free(T);
+          gsl_vector_free(rhs);
         }
 
         growth_iter++;
       }
 
-      // Fail if max patch growth iteration was not enough
+      // Fail if max patch growth iteration was not enough to satisfy the
+      // conditions for a solvable and acceptably-conditioned system.
       Assert(patch_dofs.size() >= min_points + 1,
              ExcMessage("Recovery patch doesn't have enough sampling points!"));
+      Assert(rcond > rcond_tol,
+             ExcMessage("Least-squares system is too ill-conditioned to solve!"));
 
       // Evaluate recovered solution polynomials at selected locations on patch
       // (nodes that are interior to edges attached to the patch-central vertex,
