@@ -314,7 +314,7 @@ namespace radial
       // TODO: Optionally add an additional check based on the size of the
       // least-squares residual norm? User could provide an acceptable tolerance.
       while ((growth_iter < max_iter) &&
-             (nverts <= min_points_linear || rcond < rcond_tol))
+             (patch_dofs.size() <= min_points || rcond < rcond_tol))
       {
         // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
         for (const auto& neighbor : neighbors)
