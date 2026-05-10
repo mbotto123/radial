@@ -364,8 +364,6 @@ namespace radial
 
         if (patch_dofs.size() > min_points)
         {
-          // If we have enough points, try least-squares and check residual norm
-
           std::vector<std::vector<double>> coord_patch_vertices(dim);
           for (int d = 0; d < dim; d++)
             coord_patch_vertices[d].resize(nverts);
