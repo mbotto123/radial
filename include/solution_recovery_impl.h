@@ -134,16 +134,6 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Loop through vertices to construct recovery patches
 
-    unsigned int min_points_linear;
-    if (dim == 2)
-    {
-      min_points_linear = 0.5 * (2 + 1) * (2 + 2);
-    }
-    else if (dim == 3)
-    {
-      min_points_linear = (1.0/6.0) * (2 + 1) * (2 + 2) * (2 + 3);
-    }
-
     const std::vector<Point<dim>> &vertex_coords = triangulation.get_vertices();
 
     for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
