@@ -88,16 +88,7 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Create monomial basis for least-squares fit
 
-    // Minimum number of sampling points required to get a solvable system on a patch
-    unsigned int min_points;
-    if (dim == 2)
-    {
-      min_points = 0.5 * (order_enriched + 1) * (order_enriched + 2);
-    }
-    else if (dim == 3)
-    {
-      min_points = (1.0/6.0) * (order_enriched + 1) * (order_enriched + 2) * (order_enriched + 3);
-    }
+    unsigned int min_points = radial::get_min_points<dim>(order_enriched);
 
     std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(min_points);
 

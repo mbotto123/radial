@@ -31,4 +31,7 @@ namespace radial
                              FEValues<3>& fe_values_nodes,
                              std::vector<types::global_dof_index>& local_dof_indices,
                              Point<3>& coord_min, Point<3>& coord_max);
+
+  template unsigned int get_min_points<2>(const unsigned int order_enriched);
+  template unsigned int get_min_points<3>(const unsigned int order_enriched);
 } // namespace radial

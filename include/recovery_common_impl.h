@@ -346,4 +346,27 @@ namespace radial
                                        coord_patch_nodes[d].end());
     }
   }
+
+  // Minimum number of sampling points required to get a solvable system on a
+  // patch. This is the number required for interpolation. Least-squares will
+  // need at least 1 more than this.
+  //
+  // In a more general context, this is just the number of coefficients (or
+  // linearly independent basis functions) needed to define a polynomial with
+  // the given order.
+  template <int dim>
+  unsigned int get_min_points(const unsigned int order_enriched)
+  {
+    unsigned int min_points = 1;
+
+    double inverse_factorial = 1;
+    for (int d = 1; d <= dim; d++)
+    {
+      inverse_factorial /= d;
+      min_points *= (order_enriched + d);
+    }
+    min_points *= inverse_factorial;
+
+    return min_points;
+  }
 } // namespace radial

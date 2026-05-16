@@ -26,6 +26,9 @@ namespace radial
                                FEValues<dim>& fe_values_nodes,
                                std::vector<types::global_dof_index>& local_dof_indices,
                                Point<dim>& coord_min, Point<dim>& coord_max);
+  
+  template <int dim>
+  unsigned int get_min_points(const unsigned int order_enriched);
 }
 
 #endif // RECOVERY_COMMON_H
