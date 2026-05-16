@@ -109,12 +109,16 @@ namespace radial
 
     for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
     {
+      // Pointers to all cells in the patch
       std::set<typename DoFHandler<dim>::active_cell_iterator> patch_cells;
-
-      // Set to keep count of patch DOFs
+      // Global DOF indices of all DOFs in the patch
       std::set<types::global_dof_index> patch_dofs;
+      // Global vertex indices of all vertices in the patch
+      std::set<unsigned int> patch_vertices;
+      // Global vertex indices of the vertices on the outer patch boundary
+      std::set<unsigned int> neighbors;
 
-      // Add cells that contain the central vertex to the patch
+      // Initialize sets based on the baseline patch
       for (const auto &cell: vertex_to_cell[v])
       {
         patch_cells.insert(cell);
@@ -122,13 +126,7 @@ namespace radial
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i : fe_values_nodes.dof_indices())
           patch_dofs.insert(local_dof_indices[i]);
-      }
 
-      std::set<unsigned int> patch_vertices;
-      std::set<unsigned int> neighbors;
-
-      for (const auto &cell: vertex_to_cell[v])
-      {
         for (const auto v: cell->vertex_indices())
         {
           unsigned int neighbor = cell->vertex_index(v);
