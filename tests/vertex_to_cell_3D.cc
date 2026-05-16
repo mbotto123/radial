@@ -15,7 +15,7 @@
 #include <recovery_common.h>
 
 //-------------------------------------------------------------------------//
-// Test of creating vertex-to-cell mapping in 2D
+// Test of creating vertex-to-cell mapping in 3D
 //-------------------------------------------------------------------------//
 
 using namespace dealii;
