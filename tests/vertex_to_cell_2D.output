@@ -1,0 +1,43 @@
+----------------------------------------
+P1:
+----------------------------------------
+Patch 0 cells: 0,
+Patch 1 cells: 0,1,2,
+Patch 2 cells: 2,3,
+Patch 3 cells: 0,1,4,
+Patch 4 cells: 1,2,3,4,5,6,
+Patch 5 cells: 3,6,7,
+Patch 6 cells: 4,5,
+Patch 7 cells: 5,6,7,
+Patch 8 cells: 7,
+Enriched Patch 0 cells: 0,
+Enriched Patch 1 cells: 0,1,2,
+Enriched Patch 2 cells: 2,3,
+Enriched Patch 3 cells: 0,1,4,
+Enriched Patch 4 cells: 1,2,3,4,5,6,
+Enriched Patch 5 cells: 3,6,7,
+Enriched Patch 6 cells: 4,5,
+Enriched Patch 7 cells: 5,6,7,
+Enriched Patch 8 cells: 7,
+----------------------------------------
+P2:
+----------------------------------------
+Patch 0 cells: 0,
+Patch 1 cells: 0,1,2,
+Patch 2 cells: 2,3,
+Patch 3 cells: 0,1,4,
+Patch 4 cells: 1,2,3,4,5,6,
+Patch 5 cells: 3,6,7,
+Patch 6 cells: 4,5,
+Patch 7 cells: 5,6,7,
+Patch 8 cells: 7,
+Enriched Patch 0 cells: 0,
+Enriched Patch 1 cells: 0,1,2,
+Enriched Patch 2 cells: 2,3,
+Enriched Patch 3 cells: 0,1,4,
+Enriched Patch 4 cells: 1,2,3,4,5,6,
+Enriched Patch 5 cells: 3,6,7,
+Enriched Patch 6 cells: 4,5,
+Enriched Patch 7 cells: 5,6,7,
+Enriched Patch 8 cells: 7,
+----------------------------------------

@@ -77,39 +77,12 @@ namespace radial
 
     //-------------------------------------------------------------------------//
     // Create data structure that contains the baseline patch for every vertex.
-    //
-    // The way a "patch" is implemented is as a list of iterators, i.e. pointers
-    // to the different cells in the patch. These pointers may be pointing to
-    // cells that are far away from each other in memory, so maybe there is a
-    // more efficient way to implement this in terms of memory access. TODO.
-    //
-    // Two data structures are created, one for the non-enriched field, and one
-    // for the enriched field.
-
-    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
 
     std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>> vertex_to_cell;
-    vertex_to_cell.resize(triangulation.n_vertices());
-
     std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>> vertex_to_cell_enriched;
-    vertex_to_cell_enriched.resize(triangulation.n_vertices());
 
-    // Get iterator for enriched field explicitly. We need to take care of incrementing
-    // this iterator manually, so that it keeps up with the iterator we're looping over.
-    typename DoFHandler<dim>::active_cell_iterator cell_enriched_it = dof_handler_enriched.begin();
-
-    for (const auto &cell: dof_handler.active_cell_iterators())
-    {
-      for (const auto v: cell->vertex_indices())
-      {
-        // Add base field cell
-        vertex_to_cell[cell->vertex_index(v)].emplace_back(cell);
-        // Add enriched field cell
-        vertex_to_cell_enriched[cell->vertex_index(v)].emplace_back(cell_enriched_it);
-      }
-      
-      ++cell_enriched_it; // This iterator needs to be incremented manually
-    }
+    radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
+                                  vertex_to_cell, vertex_to_cell_enriched);
     //-------------------------------------------------------------------------//
 
     //-------------------------------------------------------------------------//
@@ -134,6 +107,7 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Loop through vertices to construct recovery patches
 
+    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
     const std::vector<Point<dim>> &vertex_coords = triangulation.get_vertices();
 
     for (unsigned int v = 0; v < vertex_to_cell.size(); v++)

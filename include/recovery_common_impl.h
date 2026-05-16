@@ -1,3 +1,7 @@
+#include <deal.II/grid/tria.h>
+
+#include <deal.II/dofs/dof_handler.h>
+
 #include <deal.II/base/point.h>
 #include <deal.II/base/table.h>
 
@@ -9,6 +13,44 @@
 namespace radial
 {
   using namespace dealii;
+
+  // Fill data structure that contains the baseline patch for every vertex.
+  //
+  // The way a "patch" is implemented is as a list of iterators, i.e. pointers
+  // to the different cells in the patch. These pointers may be pointing to
+  // cells that are far away from each other in memory, so maybe there is a
+  // more efficient way to implement this in terms of memory access. TODO.
+  //
+  // Two data structures are filled, one for the non-enriched field, and one
+  // for the enriched field.
+  template <int dim>
+  void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
+                             const DoFHandler<dim>& dof_handler_enriched,
+                             std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>>& vertex_to_cell,
+                             std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>>& vertex_to_cell_enriched)
+  {
+    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
+
+    vertex_to_cell.resize(triangulation.n_vertices());
+    vertex_to_cell_enriched.resize(triangulation.n_vertices());
+
+    // Get iterator for enriched field explicitly. We need to take care of incrementing
+    // this iterator manually, so that it keeps up with the iterator we're looping over.
+    typename DoFHandler<dim>::active_cell_iterator cell_enriched_it = dof_handler_enriched.begin();
+
+    for (const auto &cell: dof_handler.active_cell_iterators())
+    {
+      for (const auto v: cell->vertex_indices())
+      {
+        // Add base field cell
+        vertex_to_cell[cell->vertex_index(v)].emplace_back(cell);
+        // Add enriched field cell
+        vertex_to_cell_enriched[cell->vertex_index(v)].emplace_back(cell_enriched_it);
+      }
+      
+      ++cell_enriched_it; // This iterator needs to be incremented manually
+    }
+  }
 
   // Create a set of basis functions representing a global polynomial over a
   // patch of elements, to be used for a least-squares problem on the patch.
