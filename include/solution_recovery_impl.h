@@ -107,9 +107,6 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Loop through vertices to construct recovery patches
 
-    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
-    const std::vector<Point<dim>> &vertex_coords = triangulation.get_vertices();
-
     for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
     {
       std::set<typename DoFHandler<dim>::active_cell_iterator> patch_cells;
@@ -143,8 +140,6 @@ namespace radial
         }
       }
 
-      unsigned int nverts = patch_vertices.size();
-
       // Vector of least-squares coefficients
       Vector<double> a(min_points);
 
@@ -164,26 +159,39 @@ namespace radial
       // patch at all.
       if (patch_dofs.size() > min_points)
       {
-        std::vector<std::vector<double>> coord_patch_vertices(dim);
+        std::vector<std::vector<double>> coord_patch_nodes(dim);
         for (int d = 0; d < dim; d++)
-          coord_patch_vertices[d].resize(nverts);
+          coord_patch_nodes[d].resize(patch_dofs.size());
 
-        int vertex_count = 0;
-        for (const auto& vertex : patch_vertices)
+        std::set<types::global_dof_index> traversed_nodes;
+        unsigned int node_count = 0;
+
+        for (const auto &cell: patch_cells)
         {
-          for (int d = 0; d < dim; d++)
-            coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
+          fe_values_nodes.reinit(cell);
 
-          vertex_count++;
+          cell->get_dof_indices(local_dof_indices);
+
+          for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
+          {
+            if (traversed_nodes.count(local_dof_indices[i]) < 1) // if we haven't been to this node yet
+            {
+              Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
+
+              for (int d = 0; d < dim; d++)
+                coord_patch_nodes[d][node_count] = node_physical_coords(d);
+
+              node_count++;
+            }
+            traversed_nodes.insert(local_dof_indices[i]);
+          }
         }
 
         // Find limits of the bounding box that contains the patch
-        // TODO: For this to be valid on curved elements, this needs to be done
-        // with node coordinates, not vertex coordinates.
         for (int d = 0; d < dim; d++)
         {
-          coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
-          coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+          coord_min(d) = *std::min_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
+          coord_max(d) = *std::max_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
         }
 
         // Create RHS and system matrix for discrete least-squares. We use GSL
@@ -324,30 +332,41 @@ namespace radial
 
         neighbors = next_neighbors;
 
-        nverts = patch_vertices.size();
-
         if (patch_dofs.size() > min_points)
         {
-          std::vector<std::vector<double>> coord_patch_vertices(dim);
+          std::vector<std::vector<double>> coord_patch_nodes(dim);
           for (int d = 0; d < dim; d++)
-            coord_patch_vertices[d].resize(nverts);
+            coord_patch_nodes[d].resize(patch_dofs.size());
 
-          int vertex_count = 0;
-          for (const auto& vertex : patch_vertices)
+          std::set<types::global_dof_index> traversed_nodes;
+          unsigned int node_count = 0;
+
+          for (const auto &cell: patch_cells)
           {
-            for (int d = 0; d < dim; d++)
-              coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
+            fe_values_nodes.reinit(cell);
 
-            vertex_count++;
+            cell->get_dof_indices(local_dof_indices);
+
+            for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
+            {
+              if (traversed_nodes.count(local_dof_indices[i]) < 1) // if we haven't been to this node yet
+              {
+                Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
+
+                for (int d = 0; d < dim; d++)
+                  coord_patch_nodes[d][node_count] = node_physical_coords(d);
+
+                node_count++;
+              }
+              traversed_nodes.insert(local_dof_indices[i]);
+            }
           }
 
           // Find limits of the bounding box that contains the patch
-          // TODO: For this to be valid on curved elements, this needs to be done
-          // with node coordinates, not vertex coordinates.
           for (int d = 0; d < dim; d++)
           {
-            coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
-            coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(), coord_patch_vertices[d].end());
+            coord_min(d) = *std::min_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
+            coord_max(d) = *std::max_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
           }
 
           // Create RHS and system matrix for discrete least-squares. We use GSL
