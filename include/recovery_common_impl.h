@@ -1,9 +1,12 @@
 #include <deal.II/grid/tria.h>
 
 #include <deal.II/dofs/dof_handler.h>
+#include <deal.II/fe/fe_values.h>
 
 #include <deal.II/base/point.h>
 #include <deal.II/base/table.h>
+
+#include <functional>
 
 // Uncomment if adding Legendre basis option later
 // #include <gsl/gsl_sf_legendre.h>
@@ -289,5 +292,58 @@ namespace radial
       }
     }
     */
+  }
+
+  // Find the bounding box of a patch of cells.
+  //
+  // Implemented by finding the minimum and maximum physical coordinates over
+  // all nodes in the patch. Note that we use nodes rather than vertices so that
+  // this computation will be valid for curved meshes as well as linear meshes.
+  // On a curved mesh, it's possible that the minimum/maximum coordinates will
+  // come from an edge node rather than a vertex.
+  template <int dim>
+  void find_patch_bounding_box(const std::set<typename DoFHandler<dim>::active_cell_iterator>& patch_cells,
+                               const std::set<types::global_dof_index>& patch_dofs,
+                               FEValues<dim>& fe_values_nodes,
+                               std::vector<types::global_dof_index>& local_dof_indices,
+                               Point<dim>& coord_min, Point<dim>& coord_max)
+  {
+    std::vector<std::vector<double>> coord_patch_nodes(dim);
+    for (int d = 0; d < dim; d++)
+      coord_patch_nodes[d].resize(patch_dofs.size());
+
+    std::set<types::global_dof_index> traversed_nodes;
+    unsigned int node_count = 0;
+
+    // Loop over patch cells and get physical coordinates of the nodes
+    for (const auto &cell: patch_cells)
+    {
+      fe_values_nodes.reinit(cell);
+
+      cell->get_dof_indices(local_dof_indices);
+
+      for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
+      {
+        if (traversed_nodes.count(local_dof_indices[i]) < 1) // if we haven't been to this node yet
+        {
+          Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
+
+          for (int d = 0; d < dim; d++)
+            coord_patch_nodes[d][node_count] = node_physical_coords(d);
+
+          node_count++;
+        }
+        traversed_nodes.insert(local_dof_indices[i]);
+      }
+    }
+
+    // Find limits of the bounding box that contains the patch
+    for (int d = 0; d < dim; d++)
+    {
+      coord_min(d) = *std::min_element(coord_patch_nodes[d].begin(),
+                                       coord_patch_nodes[d].end());
+      coord_max(d) = *std::max_element(coord_patch_nodes[d].begin(),
+                                       coord_patch_nodes[d].end());
+    }
   }
 } // namespace radial

@@ -157,40 +157,9 @@ namespace radial
       // patch at all.
       if (patch_dofs.size() > min_points)
       {
-        std::vector<std::vector<double>> coord_patch_nodes(dim);
-        for (int d = 0; d < dim; d++)
-          coord_patch_nodes[d].resize(patch_dofs.size());
-
-        std::set<types::global_dof_index> traversed_nodes;
-        unsigned int node_count = 0;
-
-        for (const auto &cell: patch_cells)
-        {
-          fe_values_nodes.reinit(cell);
-
-          cell->get_dof_indices(local_dof_indices);
-
-          for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
-          {
-            if (traversed_nodes.count(local_dof_indices[i]) < 1) // if we haven't been to this node yet
-            {
-              Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
-
-              for (int d = 0; d < dim; d++)
-                coord_patch_nodes[d][node_count] = node_physical_coords(d);
-
-              node_count++;
-            }
-            traversed_nodes.insert(local_dof_indices[i]);
-          }
-        }
-
-        // Find limits of the bounding box that contains the patch
-        for (int d = 0; d < dim; d++)
-        {
-          coord_min(d) = *std::min_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
-          coord_max(d) = *std::max_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
-        }
+        radial::find_patch_bounding_box(patch_cells, patch_dofs,
+                                        fe_values_nodes, local_dof_indices,
+                                        coord_min, coord_max);
 
         // Create RHS and system matrix for discrete least-squares. We use GSL
         // so that condition number estimation can be done once the system
@@ -332,40 +301,9 @@ namespace radial
 
         if (patch_dofs.size() > min_points)
         {
-          std::vector<std::vector<double>> coord_patch_nodes(dim);
-          for (int d = 0; d < dim; d++)
-            coord_patch_nodes[d].resize(patch_dofs.size());
-
-          std::set<types::global_dof_index> traversed_nodes;
-          unsigned int node_count = 0;
-
-          for (const auto &cell: patch_cells)
-          {
-            fe_values_nodes.reinit(cell);
-
-            cell->get_dof_indices(local_dof_indices);
-
-            for (const unsigned int i : fe_values_nodes.quadrature_point_indices())
-            {
-              if (traversed_nodes.count(local_dof_indices[i]) < 1) // if we haven't been to this node yet
-              {
-                Point<dim> node_physical_coords = fe_values_nodes.quadrature_point(i);
-
-                for (int d = 0; d < dim; d++)
-                  coord_patch_nodes[d][node_count] = node_physical_coords(d);
-
-                node_count++;
-              }
-              traversed_nodes.insert(local_dof_indices[i]);
-            }
-          }
-
-          // Find limits of the bounding box that contains the patch
-          for (int d = 0; d < dim; d++)
-          {
-            coord_min(d) = *std::min_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
-            coord_max(d) = *std::max_element(coord_patch_nodes[d].begin(), coord_patch_nodes[d].end());
-          }
+          radial::find_patch_bounding_box(patch_cells, patch_dofs,
+                                          fe_values_nodes, local_dof_indices,
+                                          coord_min, coord_max);
 
           // Create RHS and system matrix for discrete least-squares. We use GSL
           // so that condition number estimation can be done once the system
