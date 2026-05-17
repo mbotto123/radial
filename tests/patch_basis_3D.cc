@@ -27,7 +27,7 @@ void patch_basis_test_P2_3D()
   // the finite element solution.
   const unsigned int basis_order = order + 1;
 
-  const unsigned int basis_size = (1.0/6.0) * (basis_order + 1) * (basis_order + 2) * (basis_order + 3);
+  const unsigned int basis_size = radial::get_min_points<dim>(basis_order);
 
   std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(basis_size);
 
@@ -82,7 +82,7 @@ void patch_basis_test_P3_3D()
   // the finite element solution.
   const unsigned int basis_order = order + 1;
 
-  const unsigned int basis_size = (1.0/6.0) * (basis_order + 1) * (basis_order + 2) * (basis_order + 3);
+  const unsigned int basis_size = radial::get_min_points<dim>(basis_order);
 
   std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(basis_size);
 

@@ -22,6 +22,7 @@
 #include <cmath>
 
 #include <solution_recovery.h>
+#include <recovery_common.h>
 
 //-------------------------------------------------------------------------//
 // Test of solution recovery function in 3D
@@ -38,10 +39,7 @@ void ppr_interpolant_test_P1_3D()
   // Function to interpolate from
   const int order_enriched = order + 1;
 
-  const int basis_size = (1.0/6.0) *
-                         (order_enriched + 1) *
-                         (order_enriched + 2) *
-                         (order_enriched + 3);
+  const int basis_size = radial::get_min_points<dim>(order_enriched);
 
   // Monomial coefficients
   std::vector<double> coeffs(basis_size);
@@ -137,10 +135,7 @@ void ppr_interpolant_test_P2_3D()
   // Function to interpolate from
   const int order_enriched = order + 1;
 
-  const int basis_size = (1.0/6.0) *
-                         (order_enriched + 1) *
-                         (order_enriched + 2) *
-                         (order_enriched + 3);
+  const int basis_size = radial::get_min_points<dim>(order_enriched);
 
   // Monomial coefficients
   std::vector<double> coeffs(basis_size);
