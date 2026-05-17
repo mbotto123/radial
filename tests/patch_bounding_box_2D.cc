@@ -60,8 +60,6 @@ void patch_bounding_box_test_2D(const int order)
 
   DoFHandler<dim> dof_handler_enriched(triangulation); 
   dof_handler_enriched.distribute_dofs(fe_enriched);
-
-  Vector<double> interpolant_enriched(dof_handler_enriched.n_dofs());
   //-------------------------------------------------------------------------//
 
   std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>> vertex_to_cell;
