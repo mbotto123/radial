@@ -8,18 +8,12 @@
 #include <deal.II/base/quadrature_lib.h>
 
 #include <deal.II/lac/vector.h>
-#include <deal.II/lac/full_matrix.h>
-#include <deal.II/lac/householder.h>
 
 #include <deal.II/numerics/vector_tools.h>
 
 #include <cmath>
 #include <set>
 #include <functional>
-
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_linalg.h>
 
 #include <recovery_common.h>
 
