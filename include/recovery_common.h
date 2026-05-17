@@ -20,8 +20,8 @@ namespace radial
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
                              const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::list<radial::cell_pointer<dim>>>& vertex_to_cell,
-                             std::vector<std::list<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
+                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell,
+                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
 
   template <int dim>
   void find_patch_bounding_box(const std::set<radial::cell_pointer<dim>>& patch_cells,

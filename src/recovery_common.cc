@@ -7,12 +7,12 @@ namespace radial
   // Explicit instantiations
   template void create_vertex_to_cell<2>(const DoFHandler<2>& dof_handler,
                                          const DoFHandler<2>& dof_handler_enriched,
-                                         std::vector<std::list<radial::cell_pointer<2>>>& vertex_to_cell,
-                                         std::vector<std::list<radial::cell_pointer<2>>>& vertex_to_cell_enriched);
+                                         std::vector<std::set<radial::cell_pointer<2>>>& vertex_to_cell,
+                                         std::vector<std::set<radial::cell_pointer<2>>>& vertex_to_cell_enriched);
   template void create_vertex_to_cell<3>(const DoFHandler<3>& dof_handler,
                                          const DoFHandler<3>& dof_handler_enriched,
-                                         std::vector<std::list<radial::cell_pointer<3>>>& vertex_to_cell,
-                                         std::vector<std::list<radial::cell_pointer<3>>>& vertex_to_cell_enriched);
+                                         std::vector<std::set<radial::cell_pointer<3>>>& vertex_to_cell,
+                                         std::vector<std::set<radial::cell_pointer<3>>>& vertex_to_cell_enriched);
 
   template void create_patch_basis<2>(const unsigned int order,
                                       std::vector<std::function<double(Point<2>)>>& patch_basis_funcs);

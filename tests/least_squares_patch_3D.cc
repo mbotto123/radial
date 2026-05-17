@@ -109,22 +109,20 @@ void least_squares_patch_test_P1_3D()
   radial::create_patch_basis(order, patch_basis_funcs);
   //-------------------------------------------------------------------------//
 
-  std::vector<std::list<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::list<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+  std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell;
+  std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
   radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                 vertex_to_cell, vertex_to_cell_enriched);
 
-  std::set<radial::cell_pointer<dim>> patch_cells;
   std::set<types::global_dof_index> patch_dofs;
 
   // Solve least-squares problem for central vertex patch. This patch does not
   // require any growth iterations.
   int v = 13;
+  std::set<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
   for (const auto &cell: vertex_to_cell[v])
   {
-    patch_cells.insert(cell);
-
     cell->get_dof_indices(local_dof_indices);
     for (unsigned int i : fe_values_nodes.dof_indices())
       patch_dofs.insert(local_dof_indices[i]);
@@ -260,22 +258,20 @@ void least_squares_patch_test_P2_3D()
   radial::create_patch_basis(order, patch_basis_funcs);
   //-------------------------------------------------------------------------//
 
-  std::vector<std::list<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::list<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+  std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell;
+  std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
   radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                 vertex_to_cell, vertex_to_cell_enriched);
 
-  std::set<radial::cell_pointer<dim>> patch_cells;
   std::set<types::global_dof_index> patch_dofs;
 
   // Solve least-squares problem for central vertex patch. This patch does not
   // require any growth iterations.
   int v = 13;
+  std::set<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
   for (const auto &cell: vertex_to_cell[v])
   {
-    patch_cells.insert(cell);
-
     cell->get_dof_indices(local_dof_indices);
     for (unsigned int i : fe_values_nodes.dof_indices())
       patch_dofs.insert(local_dof_indices[i]);

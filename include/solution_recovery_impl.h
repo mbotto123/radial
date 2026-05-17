@@ -72,8 +72,8 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Create data structure that contains the baseline patch for every vertex.
 
-    std::vector<std::list<radial::cell_pointer<dim>>> vertex_to_cell;
-    std::vector<std::list<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+    std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell;
+    std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
     radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                   vertex_to_cell, vertex_to_cell_enriched);
@@ -93,8 +93,9 @@ namespace radial
 
     for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
     {
-      // Pointers to all cells in the patch
-      std::set<radial::cell_pointer<dim>> patch_cells;
+      // Pointers to all cells in the patch. Initially, this is the same as the
+      // baseline patch, but we may need to grow the patch beyond that.
+      std::set<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
       // Global DOF indices of all DOFs in the patch
       std::set<types::global_dof_index> patch_dofs;
       // Global vertex indices of all vertices in the patch
@@ -105,8 +106,6 @@ namespace radial
       // Initialize sets based on the baseline patch
       for (const auto &cell: vertex_to_cell[v])
       {
-        patch_cells.insert(cell);
-   
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i : fe_values_nodes.dof_indices())
           patch_dofs.insert(local_dof_indices[i]);

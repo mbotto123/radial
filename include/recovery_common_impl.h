@@ -23,7 +23,8 @@ namespace radial
 {
   using namespace dealii;
 
-  // Fill data structure that contains the baseline patch for every vertex.
+  // Fill data structure that contains the baseline patch for every vertex, i.e.
+  // all of the cells that are directly attached to a vertex.
   //
   // The way a "patch" is implemented is as a list of iterators, i.e. pointers
   // to the different cells in the patch. These pointers may be pointing to
@@ -31,12 +32,14 @@ namespace radial
   // more efficient way to implement this in terms of memory access. TODO.
   //
   // Two data structures are filled, one for the non-enriched field, and one
-  // for the enriched field.
+  // for the enriched field. Although the global element indices are the same
+  // for both fields, a pointer to a non-enriched field cell is not the same
+  // as a pointer to an enriched field cell, so we keep track of them separately.
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
                              const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::list<radial::cell_pointer<dim>>>& vertex_to_cell,
-                             std::vector<std::list<radial::cell_pointer<dim>>>& vertex_to_cell_enriched)
+                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell,
+                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell_enriched)
   {
     const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
 
@@ -52,9 +55,9 @@ namespace radial
       for (const auto v: cell->vertex_indices())
       {
         // Add base field cell
-        vertex_to_cell[cell->vertex_index(v)].emplace_back(cell);
+        vertex_to_cell[cell->vertex_index(v)].insert(cell);
         // Add enriched field cell
-        vertex_to_cell_enriched[cell->vertex_index(v)].emplace_back(cell_enriched_it);
+        vertex_to_cell_enriched[cell->vertex_index(v)].insert(cell_enriched_it);
       }
       
       ++cell_enriched_it; // This iterator needs to be incremented manually
