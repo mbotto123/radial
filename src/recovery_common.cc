@@ -34,4 +34,27 @@ namespace radial
 
   template unsigned int get_min_points<2>(const unsigned int order_enriched);
   template unsigned int get_min_points<3>(const unsigned int order_enriched);
+
+  template void
+  solve_least_squares_patch<2>(const std::set<typename DoFHandler<2>::active_cell_iterator>& patch_cells,
+                               const std::set<types::global_dof_index>& patch_dofs,
+                               const std::vector<std::function<double(Point<2>)>>& patch_basis_funcs,
+                               const Vector<double>& solution,
+                               const unsigned int min_points,
+                               const double rcond_tol,
+                               FEValues<2>& fe_values_nodes,
+                               std::vector<types::global_dof_index>& local_dof_indices,
+                               Vector<double>& lsq_coeffs,
+                               double& rcond);
+  template void
+  solve_least_squares_patch<3>(const std::set<typename DoFHandler<3>::active_cell_iterator>& patch_cells,
+                               const std::set<types::global_dof_index>& patch_dofs,
+                               const std::vector<std::function<double(Point<3>)>>& patch_basis_funcs,
+                               const Vector<double>& solution,
+                               const unsigned int min_points,
+                               const double rcond_tol,
+                               FEValues<3>& fe_values_nodes,
+                               std::vector<types::global_dof_index>& local_dof_indices,
+                               Vector<double>& lsq_coeffs,
+                               double& rcond);
 } // namespace radial
