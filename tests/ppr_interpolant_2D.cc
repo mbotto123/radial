@@ -146,7 +146,7 @@ void ppr_interpolant_test_P2_2D()
                                     0, 2,  // x^0 y^2
                                     3, 0,  // x^3 y^0
                                     2, 1,  // x^2 y^1
-                                    1, 2,  // x^2 y^2
+                                    1, 2,  // x^1 y^2
                                     0, 3}; // x^0 y^3
   Table<2, double> exponents(basis_size, dim, exponents_array);
 
