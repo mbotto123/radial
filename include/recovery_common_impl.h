@@ -1,3 +1,5 @@
+#include <recovery_common.h>
+
 #include <deal.II/grid/tria.h>
 
 #include <deal.II/dofs/dof_handler.h>
@@ -33,8 +35,8 @@ namespace radial
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
                              const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>>& vertex_to_cell,
-                             std::vector<std::list<typename DoFHandler<dim>::active_cell_iterator>>& vertex_to_cell_enriched)
+                             std::vector<std::list<radial::cell_pointer<dim>>>& vertex_to_cell,
+                             std::vector<std::list<radial::cell_pointer<dim>>>& vertex_to_cell_enriched)
   {
     const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
 
@@ -43,7 +45,7 @@ namespace radial
 
     // Get iterator for enriched field explicitly. We need to take care of incrementing
     // this iterator manually, so that it keeps up with the iterator we're looping over.
-    typename DoFHandler<dim>::active_cell_iterator cell_enriched_it = dof_handler_enriched.begin();
+    radial::cell_pointer<dim> cell_enriched_it = dof_handler_enriched.begin();
 
     for (const auto &cell: dof_handler.active_cell_iterators())
     {
@@ -306,7 +308,7 @@ namespace radial
   // On a curved mesh, it's possible that the minimum/maximum coordinates will
   // come from an edge node rather than a vertex.
   template <int dim>
-  void find_patch_bounding_box(const std::set<typename DoFHandler<dim>::active_cell_iterator>& patch_cells,
+  void find_patch_bounding_box(const std::set<radial::cell_pointer<dim>>& patch_cells,
                                const std::set<types::global_dof_index>& patch_dofs,
                                FEValues<dim>& fe_values_nodes,
                                std::vector<types::global_dof_index>& local_dof_indices,
@@ -384,7 +386,7 @@ namespace radial
   // The reciprocal condition number of the least-squares system matrix is also
   // an input/output argument.
   template<int dim>
-  void solve_least_squares_patch(const std::set<typename DoFHandler<dim>::active_cell_iterator>& patch_cells,
+  void solve_least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
                                  const std::set<types::global_dof_index>& patch_dofs,
                                  const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
                                  const Vector<double>& solution,
