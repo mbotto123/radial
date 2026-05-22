@@ -47,9 +47,6 @@ namespace radial
                                   fe,
                                   lagrange_nodes,
                                   update_values | update_quadrature_points);
-
-    // Vector to store values at the Lagrange nodes of an element
-    std::vector<double> solution_values(lagrange_nodes.size());
     //-------------------------------------------------------------------------//
 
     //-------------------------------------------------------------------------//

@@ -82,9 +82,6 @@ void least_squares_patch_test_P1_3D()
                                 fe,
                                 lagrange_nodes,
                                 update_values | update_quadrature_points);
-
-  // Vector to store values at the Lagrange nodes of an element
-  std::vector<double> solution_values(lagrange_nodes.size());
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
@@ -231,9 +228,6 @@ void least_squares_patch_test_P2_3D()
                                 fe,
                                 lagrange_nodes,
                                 update_values | update_quadrature_points);
-
-  // Vector to store values at the Lagrange nodes of an element
-  std::vector<double> solution_values(lagrange_nodes.size());
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
