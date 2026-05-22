@@ -382,24 +382,48 @@ namespace radial
   // Construct a least-squares problem on a patch of cells, and solve it if the
   // system matrix is well-conditioned enough.
   //
-  // The vector of least-squares coefficients is an input/output argument. Its
-  // values are only modified if the least-squares problem is actually solved,
-  // though. Otherwise, it passes through unmodified.
-  //
-  // The reciprocal condition number of the least-squares system matrix is also
-  // an input/output argument.
+  // The inputs can be roughly grouped into 4 pairs as follows:
+  // 1. `patch_cells` and `patch_dofs` provide the details that identify this
+  //    patch, i.e. the cells and DOFs contained in the patch. These are
+  //    purely input arguments and do not need to be modified.
+  // 2. `patch_basis_funcs` and `fe` provide the basis functions for the patch
+  //    polyomial whose coefficients are to be determined by least squares and
+  //    for a single finite element, respectively. These are also purely input
+  //    arguments.
+  // 3. `solution` is (a reference to) the Vector with the DOFs of the finite
+  //    element field we are recovering from. `fe_values_nodes` provides the
+  //    mechanism for extracting the particular values from `solution` that
+  //    we need when we are on a cell in the patch. `fe_values_nodes` is not
+  //    `const`, but it's not really an output, either. It's really only used
+  //    internally and we don't need it once we're outside this function,
+  //    but re-defining it for each patch seems wasteful since at the time
+  //    of its construction it contains general information that is valid
+  //    for any patch.
+  // 4. `lsq_coeffs` and `rcond` are the coefficients obtained from the
+  //    least-squares solve and the estimated reciprocal condition number of the
+  //    least-squares system, respectively. A nuance about `lsq_coeffs` is that
+  //    it is only actually modified if the least-squares system is considered
+  //    to be well-conditioned enough to solve. Otherwise, the solve is skipped,
+  //    and `lsq_coeffs` passes through this function without being modified.
+  //    On the other hand, `rcond` will always have a value after this function,
+  //    because estimating it does not require the solve step to actually happen
+  //    since it can be estimated purely based on the QR decompisition.
   template<int dim>
   void solve_least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
                                  const std::set<types::global_dof_index>& patch_dofs,
                                  const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
+                                 const FiniteElement<dim>& fe,
                                  const Vector<double>& solution,
-                                 const unsigned int min_points,
-                                 const double rcond_tol,
                                  FEValues<dim>& fe_values_nodes,
-                                 std::vector<types::global_dof_index>& local_dof_indices,
                                  Vector<double>& lsq_coeffs,
                                  double& rcond)
   {
+    const unsigned int order_enriched = fe.degree + 1;
+    unsigned int min_points = radial::get_min_points<dim>(order_enriched);
+
+    const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
     Point<dim> coord_min, coord_max;
     radial::find_patch_bounding_box(patch_cells, patch_dofs,
                                     fe_values_nodes, local_dof_indices,
@@ -461,6 +485,7 @@ namespace radial
     gsl_vector_free(work);
 
     // If the condition number is good enough, solve the system
+    double rcond_tol = std::numeric_limits<double>::epsilon();
     if (rcond > rcond_tol)
     {
       // The solution only actually has size N, but GSL asks for

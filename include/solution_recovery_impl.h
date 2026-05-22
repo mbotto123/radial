@@ -65,7 +65,6 @@ namespace radial
                                            update_quadrature_points); // don't need values
     //-------------------------------------------------------------------------//
 
-
     //-------------------------------------------------------------------------//
     // Create data structure that contains the baseline patch for every vertex.
 
@@ -132,9 +131,9 @@ namespace radial
       // patch at all.
       if (patch_dofs.size() > min_points)
       {
-        radial::solve_least_squares_patch(patch_cells, patch_dofs, patch_basis_funcs,
-                                          solution, min_points,
-                                          rcond_tol, fe_values_nodes, local_dof_indices,
+        radial::solve_least_squares_patch(patch_cells, patch_dofs,
+                                          patch_basis_funcs, fe,
+                                          solution, fe_values_nodes,
                                           a, rcond);
       }
       else
@@ -203,9 +202,9 @@ namespace radial
         // will indicate that we should keep growing.
         if (patch_dofs.size() > min_points)
         {
-          radial::solve_least_squares_patch(patch_cells, patch_dofs, patch_basis_funcs,
-                                            solution, min_points,
-                                            rcond_tol, fe_values_nodes, local_dof_indices,
+          radial::solve_least_squares_patch(patch_cells, patch_dofs,
+                                            patch_basis_funcs, fe,
+                                            solution, fe_values_nodes,
                                             a, rcond);
         }
 

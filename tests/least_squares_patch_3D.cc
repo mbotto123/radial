@@ -127,17 +127,12 @@ void least_squares_patch_test_P1_3D()
 
   // Vector of least-squares coefficients
   Vector<double> a(basis_size);
-
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
-  // The reciprocal condition number value at which we consider the
-  // least-squares system to be too ill-conditioned to attempt solving.
-  double rcond_tol = std::numeric_limits<double>::epsilon();
-
-  radial::solve_least_squares_patch(patch_cells, patch_dofs, patch_basis_funcs,
-                                    interpolant, basis_size,
-                                    rcond_tol, fe_values_nodes, local_dof_indices,
+  radial::solve_least_squares_patch(patch_cells, patch_dofs,
+                                    patch_basis_funcs, fe,
+                                    interpolant, fe_values_nodes,
                                     a, rcond);
 
   // Test equivalence at a point
@@ -273,17 +268,12 @@ void least_squares_patch_test_P2_3D()
 
   // Vector of least-squares coefficients
   Vector<double> a(basis_size);
-
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
-  // The reciprocal condition number value at which we consider the
-  // least-squares system to be too ill-conditioned to attempt solving.
-  double rcond_tol = std::numeric_limits<double>::epsilon();
-
-  radial::solve_least_squares_patch(patch_cells, patch_dofs, patch_basis_funcs,
-                                    interpolant, basis_size,
-                                    rcond_tol, fe_values_nodes, local_dof_indices,
+  radial::solve_least_squares_patch(patch_cells, patch_dofs,
+                                    patch_basis_funcs, fe,
+                                    interpolant, fe_values_nodes,
                                     a, rcond);
 
   // Test equivalence at a point
