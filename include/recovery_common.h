@@ -34,14 +34,14 @@ namespace radial
   unsigned int get_min_points(const unsigned int order_enriched);
 
   template<int dim>
-  void solve_least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
-                                 const std::set<types::global_dof_index>& patch_dofs,
-                                 const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
-                                 const FiniteElement<dim>& fe,
-                                 const Vector<double>& solution,
-                                 FEValues<dim>& fe_values_nodes,
-                                 Vector<double>& lsq_coeffs,
-                                 double& rcond);
+  void least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
+                           const std::set<types::global_dof_index>& patch_dofs,
+                           const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
+                           const FiniteElement<dim>& fe,
+                           const Vector<double>& solution,
+                           FEValues<dim>& fe_values_nodes,
+                           Vector<double>& lsq_coeffs,
+                           double& rcond);
 }
 
 #endif // RECOVERY_COMMON_H

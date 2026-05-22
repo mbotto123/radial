@@ -36,21 +36,21 @@ namespace radial
   template unsigned int get_min_points<3>(const unsigned int order_enriched);
 
   template void
-  solve_least_squares_patch<2>(const std::set<radial::cell_pointer<2>>& patch_cells,
-                               const std::set<types::global_dof_index>& patch_dofs,
-                               const std::vector<std::function<double(Point<2>)>>& patch_basis_funcs,
-                               const FiniteElement<2>& fe,
-                               const Vector<double>& solution,
-                               FEValues<2>& fe_values_nodes,
-                               Vector<double>& lsq_coeffs,
-                               double& rcond);
+  least_squares_patch<2>(const std::set<radial::cell_pointer<2>>& patch_cells,
+                         const std::set<types::global_dof_index>& patch_dofs,
+                         const std::vector<std::function<double(Point<2>)>>& patch_basis_funcs,
+                         const FiniteElement<2>& fe,
+                         const Vector<double>& solution,
+                         FEValues<2>& fe_values_nodes,
+                         Vector<double>& lsq_coeffs,
+                         double& rcond);
   template void
-  solve_least_squares_patch<3>(const std::set<radial::cell_pointer<3>>& patch_cells,
-                               const std::set<types::global_dof_index>& patch_dofs,
-                               const std::vector<std::function<double(Point<3>)>>& patch_basis_funcs,
-                               const FiniteElement<3>& fe,
-                               const Vector<double>& solution,
-                               FEValues<3>& fe_values_nodes,
-                               Vector<double>& lsq_coeffs,
-                               double& rcond);
+  least_squares_patch<3>(const std::set<radial::cell_pointer<3>>& patch_cells,
+                         const std::set<types::global_dof_index>& patch_dofs,
+                         const std::vector<std::function<double(Point<3>)>>& patch_basis_funcs,
+                         const FiniteElement<3>& fe,
+                         const Vector<double>& solution,
+                         FEValues<3>& fe_values_nodes,
+                         Vector<double>& lsq_coeffs,
+                         double& rcond);
 } // namespace radial

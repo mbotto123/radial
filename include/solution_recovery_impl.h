@@ -131,10 +131,10 @@ namespace radial
       // patch at all.
       if (patch_dofs.size() > min_points)
       {
-        radial::solve_least_squares_patch(patch_cells, patch_dofs,
-                                          patch_basis_funcs, fe,
-                                          solution, fe_values_nodes,
-                                          a, rcond);
+        radial::least_squares_patch(patch_cells, patch_dofs,
+                                    patch_basis_funcs, fe,
+                                    solution, fe_values_nodes,
+                                    a, rcond);
       }
       else
       {
@@ -202,10 +202,10 @@ namespace radial
         // will indicate that we should keep growing.
         if (patch_dofs.size() > min_points)
         {
-          radial::solve_least_squares_patch(patch_cells, patch_dofs,
-                                            patch_basis_funcs, fe,
-                                            solution, fe_values_nodes,
-                                            a, rcond);
+          radial::least_squares_patch(patch_cells, patch_dofs,
+                                      patch_basis_funcs, fe,
+                                      solution, fe_values_nodes,
+                                      a, rcond);
         }
 
         growth_iter++;

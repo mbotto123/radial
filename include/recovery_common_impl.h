@@ -409,14 +409,14 @@ namespace radial
   //    because estimating it does not require the solve step to actually happen
   //    since it can be estimated purely based on the QR decompisition.
   template<int dim>
-  void solve_least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
-                                 const std::set<types::global_dof_index>& patch_dofs,
-                                 const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
-                                 const FiniteElement<dim>& fe,
-                                 const Vector<double>& solution,
-                                 FEValues<dim>& fe_values_nodes,
-                                 Vector<double>& lsq_coeffs,
-                                 double& rcond)
+  void least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
+                           const std::set<types::global_dof_index>& patch_dofs,
+                           const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
+                           const FiniteElement<dim>& fe,
+                           const Vector<double>& solution,
+                           FEValues<dim>& fe_values_nodes,
+                           Vector<double>& lsq_coeffs,
+                           double& rcond)
   {
     const unsigned int order_enriched = fe.degree + 1;
     unsigned int min_points = radial::get_min_points<dim>(order_enriched);

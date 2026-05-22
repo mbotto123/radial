@@ -126,10 +126,10 @@ void least_squares_patch_test_P1_2D()
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
-  radial::solve_least_squares_patch(patch_cells, patch_dofs,
-                                    patch_basis_funcs, fe,
-                                    interpolant, fe_values_nodes,
-                                    a, rcond);
+  radial::least_squares_patch(patch_cells, patch_dofs,
+                              patch_basis_funcs, fe,
+                              interpolant, fe_values_nodes,
+                              a, rcond);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -257,10 +257,10 @@ void least_squares_patch_test_P2_2D()
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
-  radial::solve_least_squares_patch(patch_cells, patch_dofs,
-                                    patch_basis_funcs, fe,
-                                    interpolant, fe_values_nodes,
-                                    a, rcond);
+  radial::least_squares_patch(patch_cells, patch_dofs,
+                              patch_basis_funcs, fe,
+                              interpolant, fe_values_nodes,
+                              a, rcond);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
