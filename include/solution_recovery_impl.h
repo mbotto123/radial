@@ -150,8 +150,9 @@ namespace radial
 
       // TODO: Optionally add an additional check based on the size of the
       // least-squares residual norm? User could provide an acceptable tolerance.
-      while ((growth_iter < max_iter) &&
-             (patch_dofs.size() <= min_points || rcond < rcond_tol))
+      while ((growth_iter < max_iter) &&                /* max iters exceeded */
+             (patch_dofs.size() <= min_points ||        /* not enough points  */
+             (rcond < rcond_tol || std::isnan(rcond)))) /* ill-conditioning   */
       {
         // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
         for (const auto& neighbor : neighbors)
@@ -215,7 +216,7 @@ namespace radial
       // conditions for a solvable and acceptably-conditioned system.
       Assert(patch_dofs.size() >= min_points + 1,
              ExcMessage("Recovery patch doesn't have enough sampling points!"));
-      Assert(rcond > rcond_tol,
+      Assert((rcond > rcond_tol) && !std::isnan(rcond),
              ExcMessage("Least-squares system is too ill-conditioned to solve!"));
 
       // Points to store coordinates of patch bounding box
