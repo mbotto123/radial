@@ -176,7 +176,6 @@ int main()
     
     //-------------------------------------------------------------------------//
     // Compute error between enriched solution and exact solution
-    // (exact solution should be captured exactly by enriched solution)
     QWitherdenVincentSimplex<dim> error_quadrature(order_enriched + 2);
 
     Vector<double> cell_errors(triangulation.n_cells());

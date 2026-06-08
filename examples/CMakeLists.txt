@@ -1,9 +1,13 @@
+# 2D uniform refinement examples
 add_executable(uniform_projection_2D uniform_projection_2D.cc)
 deal_ii_setup_target(uniform_projection_2D)
-
 target_link_libraries(uniform_projection_2D radial)
 
+add_executable(uniform_poisson_2D uniform_poisson_2D.cc)
+deal_ii_setup_target(uniform_poisson_2D)
+target_link_libraries(uniform_poisson_2D radial)
+
+# 2D adaptation examples
 add_executable(adapt_projection_2D adapt_projection_2D.cc)
 deal_ii_setup_target(adapt_projection_2D)
-
 target_link_libraries(adapt_projection_2D radial)
