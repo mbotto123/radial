@@ -47,7 +47,7 @@ cmake -DCMAKE_BUILD_TYPE="Release" ..
 
 Then, compile an example as shown above.
 
-[^2]: For more information about switching build types in deal.ii, see the "Switching build types" section in deal.ii's "How to use CMake to configure your projects with deal.II" documentation.
+[^2]: For more information about switching build types in deal.ii, see the ["Switching build types" section in deal.ii's "How to use CMake to configure your projects with deal.II" documentation](https://dealii.org/developer/users/cmake_user.html#cmakesimple.build_type).
 
 ## Theory
 
