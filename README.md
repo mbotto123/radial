@@ -36,6 +36,19 @@ Then, run `make <example_name>`. For example, to compile the $L^2$ projection ad
 make adapt_projection_2D
 ```
 
+#### Compiling in release mode
+
+By default, `cmake ..` will configure compilation to be done in debug mode. However, for optimal performance and for
+timing purposes, the examples should be run in release mode. To configure CMake in release mode[^2], run (in the `build` directory):
+
+```
+cmake -DCMAKE_BUILD_TYPE="Release" ..
+```
+
+Then, compile an example as shown above.
+
+[^2]: For more information about switching build types in deal.ii, see the "Switching build types" section in deal.ii's "How to use CMake to configure your projects with deal.II" documentation.
+
 ## Theory
 
 This repository is an open-source implementation of some (but not all) of the methodolody described in the thesis:
