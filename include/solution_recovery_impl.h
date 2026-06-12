@@ -127,7 +127,7 @@ namespace radial
       double rcond;
       // The reciprocal condition number value at which we consider the
       // least-squares system to be too ill-conditioned to attempt solving.
-      double rcond_tol = std::numeric_limits<double>::epsilon();
+      double rcond_tol = std::numeric_limits<double>::epsilon() * 1e1;
 
       // Try least-squares on baseline patch if it already has enough points to
       // create a solvable least-squares system. If this is successful, i.e. if

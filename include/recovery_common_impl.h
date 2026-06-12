@@ -485,7 +485,7 @@ namespace radial
     gsl_vector_free(work);
 
     // If the condition number is good enough, solve the system
-    double rcond_tol = std::numeric_limits<double>::epsilon();
+    double rcond_tol = std::numeric_limits<double>::epsilon() * 1e1;
     if (rcond > rcond_tol)
     {
       // The solution only actually has size N, but GSL asks for
