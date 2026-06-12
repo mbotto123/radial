@@ -38,8 +38,8 @@ namespace radial
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
                              const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell,
-                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell_enriched)
+                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell,
+                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell_enriched)
   {
     const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
 
@@ -55,9 +55,9 @@ namespace radial
       for (const auto v: cell->vertex_indices())
       {
         // Add base field cell
-        vertex_to_cell[cell->vertex_index(v)].insert(cell);
+        vertex_to_cell[cell->vertex_index(v)].push_back(cell);
         // Add enriched field cell
-        vertex_to_cell_enriched[cell->vertex_index(v)].insert(cell_enriched_it);
+        vertex_to_cell_enriched[cell->vertex_index(v)].push_back(cell_enriched_it);
       }
       
       ++cell_enriched_it; // This iterator needs to be incremented manually
@@ -311,7 +311,7 @@ namespace radial
   // On a curved mesh, it's possible that the minimum/maximum coordinates will
   // come from an edge node rather than a vertex.
   template <int dim>
-  void find_patch_bounding_box(const std::set<radial::cell_pointer<dim>>& patch_cells,
+  void find_patch_bounding_box(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                                const std::set<types::global_dof_index>& patch_dofs,
                                FEValues<dim>& fe_values_nodes,
                                std::vector<types::global_dof_index>& local_dof_indices,
@@ -409,7 +409,7 @@ namespace radial
   //    because estimating it does not require the solve step to actually happen
   //    since it can be estimated purely based on the QR decompisition.
   template<int dim>
-  void least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
+  void least_squares_patch(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                            const std::set<types::global_dof_index>& patch_dofs,
                            const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
                            const FiniteElement<dim>& fe,

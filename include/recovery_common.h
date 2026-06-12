@@ -6,6 +6,8 @@
 
 #include <deal.II/base/point.h>
 
+#include <set>
+
 namespace radial
 {
   using namespace dealii;
@@ -20,11 +22,11 @@ namespace radial
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
                              const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell,
-                             std::vector<std::set<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
+                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell,
+                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
 
   template <int dim>
-  void find_patch_bounding_box(const std::set<radial::cell_pointer<dim>>& patch_cells,
+  void find_patch_bounding_box(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                                const std::set<types::global_dof_index>& patch_dofs,
                                FEValues<dim>& fe_values_nodes,
                                std::vector<types::global_dof_index>& local_dof_indices,
@@ -34,7 +36,7 @@ namespace radial
   unsigned int get_min_points(const unsigned int order_enriched);
 
   template<int dim>
-  void least_squares_patch(const std::set<radial::cell_pointer<dim>>& patch_cells,
+  void least_squares_patch(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                            const std::set<types::global_dof_index>& patch_dofs,
                            const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
                            const FiniteElement<dim>& fe,

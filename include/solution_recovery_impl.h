@@ -68,8 +68,8 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Create data structure that contains the baseline patch for every vertex.
 
-    std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell;
-    std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+    std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
+    std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
     radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                   vertex_to_cell, vertex_to_cell_enriched);
@@ -91,7 +91,9 @@ namespace radial
     {
       // Pointers to all cells in the patch. Initially, this is the same as the
       // baseline patch, but we may need to grow the patch beyond that.
-      std::set<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
+      std::vector<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
+      // Indices of all cells in the patch
+      std::set<int> patch_cell_indices;
       // Global DOF indices of all DOFs in the patch
       std::set<types::global_dof_index> patch_dofs;
       // Global vertex indices of all vertices in the patch
@@ -102,13 +104,15 @@ namespace radial
       // Initialize sets based on the baseline patch
       for (const auto &cell: vertex_to_cell[v])
       {
+        patch_cell_indices.insert(cell->index());
+
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i : fe_values_nodes.dof_indices())
           patch_dofs.insert(local_dof_indices[i]);
 
-        for (const auto v: cell->vertex_indices())
+        for (const auto v_patch: cell->vertex_indices())
         {
-          unsigned int neighbor = cell->vertex_index(v);
+          unsigned int neighbor = cell->vertex_index(v_patch);
 
           patch_vertices.insert(neighbor);
 
@@ -159,7 +163,10 @@ namespace radial
         {
           for (const auto &cell: vertex_to_cell[neighbor])
           {
-            patch_cells.insert(cell);
+            if (patch_cell_indices.count(cell->index()) < 1)
+              patch_cells.push_back(cell);
+
+            patch_cell_indices.insert(cell->index());
 
             cell->get_dof_indices(local_dof_indices);
             for (unsigned int i : fe_values_nodes.dof_indices())
@@ -176,9 +183,9 @@ namespace radial
 
           for (const auto &cell: vertex_to_cell[neighbor])
           {
-            for (const auto v: cell->vertex_indices())
+            for (const auto v_patch: cell->vertex_indices())
             {
-              unsigned int neighbor_of_neighbor = cell->vertex_index(v);
+              unsigned int neighbor_of_neighbor = cell->vertex_index(v_patch);
 
               if (neighbor_of_neighbor != neighbor)
                 neighbors_of_neighbor.insert(neighbor_of_neighbor);

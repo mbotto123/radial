@@ -62,8 +62,8 @@ void patch_bounding_box_test_3D(const int order)
   dof_handler_enriched.distribute_dofs(fe_enriched);
   //-------------------------------------------------------------------------//
 
-  std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::set<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
   radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                 vertex_to_cell, vertex_to_cell_enriched);
@@ -73,7 +73,7 @@ void patch_bounding_box_test_3D(const int order)
   // Test bounding box for central vertex patch. Should coincide with the
   // extents of the domain, i.e. 0 to 1 in all directions.
   int v = 13;
-  std::set<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
+  std::vector<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
   for (const auto &cell: vertex_to_cell[v])
   {
     cell->get_dof_indices(local_dof_indices);
