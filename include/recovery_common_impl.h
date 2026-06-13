@@ -514,8 +514,8 @@ namespace radial
     }
 
     // Compute QR decomposition of least-squares system matrix
-    gsl_matrix *T = gsl_matrix_alloc(min_points, min_points);
-    gsl_linalg_QR_decomp_r(A, T);
+    gsl_vector *tau = gsl_vector_alloc(min_points);
+    gsl_linalg_QR_decomp(A, tau);
 
     // Estimate reciprocal condition number
     gsl_vector *work = gsl_vector_alloc(3 * min_points);
@@ -526,24 +526,21 @@ namespace radial
     double rcond_tol = std::numeric_limits<double>::epsilon() * 1e1;
     if (rcond > rcond_tol)
     {
-      // The solution only actually has size N, but GSL asks for
-      // this input to have size M. The entries beyond N-1 store a vector
-      // that can be used to compute the least-squares residual norm.
-      gsl_vector *x = gsl_vector_alloc(patch_dofs.size());
+      gsl_vector *x = gsl_vector_alloc(min_points);
+      gsl_vector *residual = gsl_vector_alloc(patch_dofs.size());
 
-      gsl_vector *work = gsl_vector_alloc(min_points);
-      gsl_linalg_QR_lssolve_r(A, T, rhs, x, work);
-      gsl_vector_free(work);
+      gsl_linalg_QR_lssolve(A, tau, rhs, x, residual);
 
       // Copy solution into deal.ii Vector
       for (unsigned int i = 0; i < min_points; i++)
         lsq_coeffs(i) = gsl_vector_get(x, i);
 
       gsl_vector_free(x);
+      gsl_vector_free(residual);
     }
 
     gsl_matrix_free(A);
-    gsl_matrix_free(T);
+    gsl_vector_free(tau);
     gsl_vector_free(rhs);
   }
 } // namespace radial
