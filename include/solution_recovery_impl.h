@@ -163,14 +163,16 @@ namespace radial
         {
           for (const auto &cell: vertex_to_cell[neighbor])
           {
-            if (patch_cell_indices.count(cell->index()) < 1)
+            if (patch_cell_indices.count(cell->index()) < 1) /* cell is not in the patch yet */
+            {
               patch_cells.push_back(cell);
 
-            patch_cell_indices.insert(cell->index());
+              cell->get_dof_indices(local_dof_indices);
+              for (unsigned int i : fe_values_nodes.dof_indices())
+                patch_dofs.insert(local_dof_indices[i]);
 
-            cell->get_dof_indices(local_dof_indices);
-            for (unsigned int i : fe_values_nodes.dof_indices())
-              patch_dofs.insert(local_dof_indices[i]);
+              patch_cell_indices.insert(cell->index());
+            }
           }
         }
 
@@ -234,17 +236,15 @@ namespace radial
 
       // Evaluate recovered solution polynomials at selected locations on patch
       // (nodes that are interior to edges attached to the patch-central vertex,
-      // and cell nodes of cells that contain the patch-central vertex)
-
-      std::set<types::global_dof_index> eval_dofs_enriched;
-
+      // and cell nodes of cells that contain the patch-central vertex).
+      std::set<types::global_dof_index> traversed_nodes;
       for (const auto &cell : vertex_to_cell_enriched[v])
       {
         fe_values_nodes_enriched.reinit(cell);
 
         cell->get_dof_indices(local_dof_indices_enriched);
 
-        // Find the local vertex index of the patch-central vertex
+        // Local vertex index of the patch-central vertex
         unsigned int central_vert_local_index;
         bool central_vert_found = false;
         for (const auto v_enriched : cell->vertex_indices())
@@ -259,36 +259,42 @@ namespace radial
         Assert(central_vert_found,
                ExcMessage("Central vertex of recovery patch not found!"));
 
-        // Evaluate recovered solution at edge and cell nodes
+        // Evaluate recovered solution at edge and cell nodes. For simplicity of
+        // implementation, evaluation actually happens at all nodes, but the
+        // contribution of some nodes is multiplied by zero due to the barycentric
+        // weighted averaging.
         for (const unsigned int i : fe_values_nodes_enriched.quadrature_point_indices())
         {
-          // Node coordinates in reference space
-          Point<dim> node_ref_coords = fe_enriched.unit_support_point(i);
-
-          std::vector<double> node_ref_barycentric(dim + 1);
-          node_ref_barycentric[0] = 1.0;
-          for (int d = 0; d < dim; d++)
+          if (traversed_nodes.count(local_dof_indices_enriched[i]) < 1) /* haven't evaluated at this node yet */
           {
-            node_ref_barycentric[0] -= node_ref_coords[d];
-            node_ref_barycentric[d + 1] = node_ref_coords[d];
-          }
+            // Node coordinates in reference space
+            Point<dim> node_ref_coords = fe_enriched.unit_support_point(i);
 
-          double node_ref_barycentric_patch = node_ref_barycentric[central_vert_local_index];
+            std::vector<double> node_ref_barycentric(dim + 1);
+            node_ref_barycentric[0] = 1.0;
+            for (int d = 0; d < dim; d++)
+            {
+              node_ref_barycentric[0] -= node_ref_coords[d];
+              node_ref_barycentric[d + 1] = node_ref_coords[d];
+            }
 
-          Point<dim> node_physical_coords = fe_values_nodes_enriched.quadrature_point(i);
+            // Barycentric coordinate used for weighted averaging between patches
+            double node_ref_barycentric_patch = node_ref_barycentric[central_vert_local_index];
 
-          Point<dim> node_scaled_coords;
-          for (int d = 0; d < dim; d++)
-            node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
+            Point<dim> node_physical_coords = fe_values_nodes_enriched.quadrature_point(i);
 
-          double solution_enriched_node = 0;
-          for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
-            solution_enriched_node += a(monomial_index) * patch_basis_funcs[monomial_index](node_scaled_coords);
+            Point<dim> node_scaled_coords;
+            for (int d = 0; d < dim; d++)
+              node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
 
-          if (eval_dofs_enriched.count(local_dof_indices_enriched[i]) < 1)
+            double solution_enriched_node = 0;
+            for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
+              solution_enriched_node += a(monomial_index) * patch_basis_funcs[monomial_index](node_scaled_coords);
+
             solution_enriched(local_dof_indices_enriched[i]) += node_ref_barycentric_patch * solution_enriched_node;
 
-          eval_dofs_enriched.insert(local_dof_indices_enriched[i]);
+            traversed_nodes.insert(local_dof_indices_enriched[i]);
+          }
         }
       }
     }

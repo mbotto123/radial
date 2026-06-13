@@ -341,8 +341,9 @@ namespace radial
             coord_patch_nodes[d][node_count] = node_physical_coords(d);
 
           node_count++;
+
+          traversed_nodes.insert(local_dof_indices[i]);
         }
-        traversed_nodes.insert(local_dof_indices[i]);
       }
     }
 
@@ -470,8 +471,9 @@ namespace radial
           }
 
           eval_count++;
+
+          eval_dofs.insert(local_dof_indices[i]);
         }
-        eval_dofs.insert(local_dof_indices[i]);
       }
     }
 
