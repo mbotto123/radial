@@ -25,6 +25,10 @@ namespace radial
                              std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell,
                              std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
 
+  template<int dim>
+  void find_patch_bounding_box(const DoFHandler<dim>& dof_handler,
+                               const std::set<unsigned int>& patch_vertices,
+                               Point<dim>& coord_min, Point<dim>& coord_max);
   template <int dim>
   void find_patch_bounding_box(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                                const std::set<types::global_dof_index>& patch_dofs,
@@ -38,6 +42,8 @@ namespace radial
   template<int dim>
   void least_squares_patch(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                            const std::set<types::global_dof_index>& patch_dofs,
+                           const Point<dim>& patch_coord_min,
+                           const Point<dim>& patch_coord_max,
                            const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
                            const FiniteElement<dim>& fe,
                            const Vector<double>& solution,

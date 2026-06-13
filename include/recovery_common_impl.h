@@ -305,6 +305,40 @@ namespace radial
 
   // Find the bounding box of a patch of cells.
   //
+  // Assumes straight-sided elements, so should not be used with curved meshes.
+  template <int dim>
+  void find_patch_bounding_box(const DoFHandler<dim>& dof_handler,
+                               const std::set<unsigned int>& patch_vertices,
+                               Point<dim>& coord_min, Point<dim>& coord_max)
+  {
+    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
+    const std::vector<Point<dim>>& vertex_coords = triangulation.get_vertices();
+
+    std::vector<std::vector<double>> coord_patch_vertices(dim);
+    for (int d = 0; d < dim; d++)
+      coord_patch_vertices[d].resize(patch_vertices.size());
+
+    int vertex_count = 0;
+    for (const auto& vertex : patch_vertices)
+    {
+      for (int d = 0; d < dim; d++)
+        coord_patch_vertices[d][vertex_count] = vertex_coords[vertex](d);
+
+      vertex_count++;
+    }
+
+    // Find limits of the bounding box that contains the patch
+    for (int d = 0; d < dim; d++)
+    {
+      coord_min(d) = *std::min_element(coord_patch_vertices[d].begin(),
+                                       coord_patch_vertices[d].end());
+      coord_max(d) = *std::max_element(coord_patch_vertices[d].begin(),
+                                       coord_patch_vertices[d].end());
+    }
+  }
+
+  // Find the bounding box of a patch of cells.
+  //
   // Implemented by finding the minimum and maximum physical coordinates over
   // all nodes in the patch. Note that we use nodes rather than vertices so that
   // this computation will be valid for curved meshes as well as linear meshes.
@@ -383,10 +417,11 @@ namespace radial
   // Construct a least-squares problem on a patch of cells, and solve it if the
   // system matrix is well-conditioned enough.
   //
-  // The inputs can be roughly grouped into 4 pairs as follows:
-  // 1. `patch_cells` and `patch_dofs` provide the details that identify this
-  //    patch, i.e. the cells and DOFs contained in the patch. These are
-  //    purely input arguments and do not need to be modified.
+  // The inputs can be roughly grouped into 4 groups as follows:
+  // 1. `patch_cells`, `patch_dofs`, `patch_coord_min`, and `patch_coord_max`
+  //    provide the details that identify this patch, i.e. the cells and DOFs
+  //    contained in the patch as well as the bounding box of the patch. These
+  //    are purely input arguments and do not need to be modified.
   // 2. `patch_basis_funcs` and `fe` provide the basis functions for the patch
   //    polyomial whose coefficients are to be determined by least squares and
   //    for a single finite element, respectively. These are also purely input
@@ -412,6 +447,8 @@ namespace radial
   template<int dim>
   void least_squares_patch(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                            const std::set<types::global_dof_index>& patch_dofs,
+                           const Point<dim>& patch_coord_min,
+                           const Point<dim>& patch_coord_max,
                            const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
                            const FiniteElement<dim>& fe,
                            const Vector<double>& solution,
@@ -424,11 +461,6 @@ namespace radial
 
     const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
     std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-
-    Point<dim> coord_min, coord_max;
-    radial::find_patch_bounding_box(patch_cells, patch_dofs,
-                                    fe_values_nodes, local_dof_indices,
-                                    coord_min, coord_max);
 
     // Vector to store values at the Lagrange nodes of an element
     std::vector<double> solution_values(fe_values_nodes.n_quadrature_points);
@@ -462,12 +494,16 @@ namespace radial
 
           Point<dim> node_scaled_coords;
           for (int d = 0; d < dim; d++)
-            node_scaled_coords(d) = -1.0 + 2.0*(node_physical_coords(d) - coord_min(d))/(coord_max(d) - coord_min(d));
+          {
+            node_scaled_coords(d) = -1.0 +
+                                    2.0*(node_physical_coords(d) - patch_coord_min(d)) /
+                                    (patch_coord_max(d) - patch_coord_min(d));
+          }
 
           for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
           {
             gsl_matrix_set(A, eval_count, monomial_index,
-                            patch_basis_funcs[monomial_index](node_scaled_coords));
+                           patch_basis_funcs[monomial_index](node_scaled_coords));
           }
 
           eval_count++;

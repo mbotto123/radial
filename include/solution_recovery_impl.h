@@ -129,13 +129,19 @@ namespace radial
       // least-squares system to be too ill-conditioned to attempt solving.
       double rcond_tol = std::numeric_limits<double>::epsilon() * 1e1;
 
+      // Points to store coordinates of patch bounding box
+      Point<dim> coord_min, coord_max;
+
       // Try least-squares on baseline patch if it already has enough points to
       // create a solvable least-squares system. If this is successful, i.e. if
       // the system is well-conditioned enough, then we don't need to grow the
       // patch at all.
       if (patch_dofs.size() > min_points)
       {
+        radial::find_patch_bounding_box(dof_handler, patch_vertices,
+                                        coord_min, coord_max);
         radial::least_squares_patch(patch_cells, patch_dofs,
+                                    coord_min, coord_max,
                                     patch_basis_funcs, fe,
                                     solution, fe_values_nodes,
                                     a, rcond);
@@ -212,7 +218,10 @@ namespace radial
         // will indicate that we should keep growing.
         if (patch_dofs.size() > min_points)
         {
+          radial::find_patch_bounding_box(dof_handler, patch_vertices,
+                                          coord_min, coord_max);
           radial::least_squares_patch(patch_cells, patch_dofs,
+                                      coord_min, coord_max,
                                       patch_basis_funcs, fe,
                                       solution, fe_values_nodes,
                                       a, rcond);
@@ -227,12 +236,6 @@ namespace radial
              ExcMessage("Recovery patch doesn't have enough sampling points!"));
       Assert((rcond > rcond_tol) && !std::isnan(rcond),
              ExcMessage("Least-squares system is too ill-conditioned to solve!"));
-
-      // Points to store coordinates of patch bounding box
-      Point<dim> coord_min, coord_max;
-      radial::find_patch_bounding_box(patch_cells, patch_dofs,
-                                      fe_values_nodes, local_dof_indices,
-                                      coord_min, coord_max);
 
       // Evaluate recovered solution polynomials at selected locations on patch
       // (nodes that are interior to edges attached to the patch-central vertex,

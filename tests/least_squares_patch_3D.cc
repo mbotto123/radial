@@ -130,7 +130,12 @@ void least_squares_patch_test_P1_3D()
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
+  Point<dim> coord_min, coord_max;
+  radial::find_patch_bounding_box(patch_cells, patch_dofs,
+                                  fe_values_nodes, local_dof_indices,
+                                  coord_min, coord_max);
   radial::least_squares_patch(patch_cells, patch_dofs,
+                              coord_min, coord_max,
                               patch_basis_funcs, fe,
                               interpolant, fe_values_nodes,
                               a, rcond);
@@ -271,7 +276,12 @@ void least_squares_patch_test_P2_3D()
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
+  Point<dim> coord_min, coord_max;
+  radial::find_patch_bounding_box(patch_cells, patch_dofs,
+                                  fe_values_nodes, local_dof_indices,
+                                  coord_min, coord_max);
   radial::least_squares_patch(patch_cells, patch_dofs,
+                              coord_min, coord_max,
                               patch_basis_funcs, fe,
                               interpolant, fe_values_nodes,
                               a, rcond);

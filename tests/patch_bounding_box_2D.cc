@@ -23,7 +23,63 @@
 
 using namespace dealii;
 
-void patch_bounding_box_test_2D(const int order)
+void patch_bounding_box_test_2D_linear_mesh(const int order)
+{
+  const int dim = 2;
+
+  //-------------------------------------------------------------------------//
+  // Mesh
+  Triangulation<dim> triangulation;
+  GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Base finite element field
+  const FE_SimplexP<dim> fe(order);
+  MappingP1<dim> mapping;
+
+  DoFHandler<dim> dof_handler(triangulation); 
+  dof_handler.distribute_dofs(fe);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Enriched finite element field
+  const int order_enriched = order + 1;
+  const FE_SimplexP<dim> fe_enriched(order_enriched);
+
+  DoFHandler<dim> dof_handler_enriched(triangulation); 
+  dof_handler_enriched.distribute_dofs(fe_enriched);
+  //-------------------------------------------------------------------------//
+
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+
+  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
+                                vertex_to_cell, vertex_to_cell_enriched);
+
+  std::set<unsigned int> patch_vertices;
+
+  // Test bounding box for central vertex patch. Should coincide with the
+  // extents of the domain, i.e. 0 to 1 in all directions.
+  int v = 4;
+  std::vector<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
+  for (const auto &cell: vertex_to_cell[v])
+  {
+    for (const auto v_patch: cell->vertex_indices())
+      patch_vertices.insert(cell->vertex_index(v_patch));
+  }
+
+  Point<dim> coord_min, coord_max;
+  radial::find_patch_bounding_box(dof_handler, patch_vertices,
+                                  coord_min, coord_max);
+
+  std::cout << "Min x = " << coord_min(0) << std::endl;
+  std::cout << "Min y = " << coord_min(1) << std::endl;
+  std::cout << "Max x = " << coord_max(0) << std::endl;
+  std::cout << "Max y = " << coord_max(1) << std::endl;
+}
+
+void patch_bounding_box_test_2D_general_mesh(const int order)
 {
   const int dim = 2;
 
@@ -94,6 +150,11 @@ void patch_bounding_box_test_2D(const int order)
 
 int main()
 {
-  patch_bounding_box_test_2D(1);
-  patch_bounding_box_test_2D(2);
+  patch_bounding_box_test_2D_linear_mesh(1);
+  patch_bounding_box_test_2D_linear_mesh(2);
+
+  // Still testing on linear meshes, but the bounding box function does not
+  // assume they are linear in its implementation.
+  patch_bounding_box_test_2D_general_mesh(1);
+  patch_bounding_box_test_2D_general_mesh(2);
 }
