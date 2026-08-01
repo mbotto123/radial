@@ -54,7 +54,7 @@ void vertex_to_cell_test_3D(const int order)
   radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                 vertex_to_cell, vertex_to_cell_enriched);
 
-  for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
+  for (types::global_vertex_index v = 0; v < vertex_to_cell.size(); v++)
   {
     std::cout << "Patch " << v << " cells: ";
     for (const auto &cell: vertex_to_cell[v])
@@ -64,7 +64,7 @@ void vertex_to_cell_test_3D(const int order)
     std::cout << std::endl;
   }
 
-  for (unsigned int v = 0; v < vertex_to_cell_enriched.size(); v++)
+  for (types::global_vertex_index v = 0; v < vertex_to_cell_enriched.size(); v++)
   {
     std::cout << "Enriched Patch " << v << " cells: ";
     for (const auto &cell: vertex_to_cell_enriched[v])

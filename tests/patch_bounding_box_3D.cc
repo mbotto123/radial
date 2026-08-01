@@ -57,7 +57,7 @@ void patch_bounding_box_test_3D_linear_mesh(const int order)
   radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
                                 vertex_to_cell, vertex_to_cell_enriched);
 
-  std::set<unsigned int> patch_vertices;
+  std::set<types::global_vertex_index> patch_vertices;
 
   // Test bounding box for central vertex patch. Should coincide with the
   // extents of the domain, i.e. 0 to 1 in all directions.
