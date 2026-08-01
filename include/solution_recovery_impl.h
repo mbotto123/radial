@@ -87,19 +87,19 @@ namespace radial
     //-------------------------------------------------------------------------//
     // Loop through vertices to construct recovery patches
 
-    for (unsigned int v = 0; v < vertex_to_cell.size(); v++)
+    for (types::global_vertex_index v = 0; v < vertex_to_cell.size(); v++)
     {
       // Pointers to all cells in the patch. Initially, this is the same as the
       // baseline patch, but we may need to grow the patch beyond that.
       std::vector<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
-      // Indices of all cells in the patch
-      std::set<int> patch_cell_indices;
+      // Global cell indices of all cells in the patch
+      std::set<types::global_cell_index> patch_cell_indices;
       // Global DOF indices of all DOFs in the patch
       std::set<types::global_dof_index> patch_dofs;
       // Global vertex indices of all vertices in the patch
-      std::set<unsigned int> patch_vertices;
+      std::set<types::global_vertex_index> patch_vertices;
       // Global vertex indices of the vertices on the outer patch boundary
-      std::set<unsigned int> neighbors;
+      std::set<types::global_vertex_index> patch_boundary_vertices;
 
       // Initialize sets based on the baseline patch
       for (const auto &cell: vertex_to_cell[v])
@@ -107,19 +107,18 @@ namespace radial
         patch_cell_indices.insert(cell->index());
 
         cell->get_dof_indices(local_dof_indices);
-        for (unsigned int i : fe_values_nodes.dof_indices())
-          patch_dofs.insert(local_dof_indices[i]);
+        patch_dofs.insert(local_dof_indices.begin(),
+                          local_dof_indices.end());
 
         for (const auto v_patch: cell->vertex_indices())
         {
-          unsigned int neighbor = cell->vertex_index(v_patch);
-
+          types::global_vertex_index neighbor = cell->vertex_index(v_patch);
           patch_vertices.insert(neighbor);
-
-          if (neighbor != v)
-            neighbors.insert(neighbor);
         }
       }
+      patch_boundary_vertices = patch_vertices;
+      // Just remove the central vertex to get the patch boundary at this point
+      patch_boundary_vertices.erase(v);
 
       // Vector of least-squares coefficients
       Vector<double> a(min_points);
@@ -164,54 +163,37 @@ namespace radial
              (patch_dofs.size() <= min_points ||        /* not enough points  */
              (rcond < rcond_tol || std::isnan(rcond)))) /* ill-conditioning   */
       {
+        std::set<types::global_vertex_index> patch_vertices_old = patch_vertices;
+
         // Grow by one layer by adding all cells that contain vertices that lie on patch boundary
-        for (const auto& neighbor : neighbors)
+        for (const auto& v_boundary : patch_boundary_vertices)
         {
-          for (const auto &cell: vertex_to_cell[neighbor])
+          for (const auto &cell: vertex_to_cell[v_boundary])
           {
             if (patch_cell_indices.count(cell->index()) < 1) /* cell is not in the patch yet */
             {
               patch_cells.push_back(cell);
+              patch_cell_indices.insert(cell->index());
 
               cell->get_dof_indices(local_dof_indices);
-              for (unsigned int i : fe_values_nodes.dof_indices())
-                patch_dofs.insert(local_dof_indices[i]);
+              patch_dofs.insert(local_dof_indices.begin(),
+                                local_dof_indices.end());
 
-              patch_cell_indices.insert(cell->index());
+              for (const auto v_patch: cell->vertex_indices())
+              {
+                types::global_vertex_index neighbor = cell->vertex_index(v_patch);
+                patch_vertices.insert(neighbor);
+              }
             }
           }
         }
 
-        std::set<unsigned int> next_neighbors;
-
-        // Determine indices of sampling points on new patch boundary defined by this growth iteration
-        for (const auto& neighbor : neighbors)
-        {
-          std::set<unsigned int> neighbors_of_neighbor;
-
-          for (const auto &cell: vertex_to_cell[neighbor])
-          {
-            for (const auto v_patch: cell->vertex_indices())
-            {
-              unsigned int neighbor_of_neighbor = cell->vertex_index(v_patch);
-
-              if (neighbor_of_neighbor != neighbor)
-                neighbors_of_neighbor.insert(neighbor_of_neighbor);
-            }
-          }
-
-          for (const auto& neighbor_of_neighbor : neighbors_of_neighbor)
-          {
-            if (patch_vertices.count(neighbor_of_neighbor) < 1)
-              next_neighbors.insert(neighbor_of_neighbor);
-          }
-        }
-
-        // Update overall list of patch vertices
-        for (const auto& next_neighbor : next_neighbors)
-          patch_vertices.insert(next_neighbor);
-
-        neighbors = next_neighbors;
+        // Determine indices of vertices on new patch boundary defined by this growth iteration
+        std::set<types::global_vertex_index> new_boundary;
+        std::set_difference(patch_vertices.begin(), patch_vertices.end(),
+                            patch_vertices_old.begin(), patch_vertices_old.end(),
+                            std::inserter(new_boundary, new_boundary.begin()));
+        patch_boundary_vertices = new_boundary;
 
         // Try least-squares if we have enough points. If the system is too
         // ill-conditioned, the solve step will be skipped, and the rcond value
