@@ -308,7 +308,7 @@ namespace radial
   // Assumes straight-sided elements, so should not be used with curved meshes.
   template <int dim>
   void find_patch_bounding_box(const DoFHandler<dim>& dof_handler,
-                               const std::set<unsigned int>& patch_vertices,
+                               const std::set<types::global_vertex_index>& patch_vertices,
                                Point<dim>& coord_min, Point<dim>& coord_max)
   {
     const Triangulation<dim>& triangulation = dof_handler.get_triangulation();

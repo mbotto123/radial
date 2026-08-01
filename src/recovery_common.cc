@@ -23,11 +23,11 @@ namespace radial
 
   template void
   find_patch_bounding_box<2>(const DoFHandler<2>& dof_handler,
-                             const std::set<unsigned int>& patch_vertices,
+                             const std::set<types::global_vertex_index>& patch_vertices,
                              Point<2>& coord_min, Point<2>& coord_max);
   template void
   find_patch_bounding_box<3>(const DoFHandler<3>& dof_handler,
-                             const std::set<unsigned int>& patch_vertices,
+                             const std::set<types::global_vertex_index>& patch_vertices,
                              Point<3>& coord_min, Point<3>& coord_max);
   template void
   find_patch_bounding_box<2>(const std::vector<radial::cell_pointer<2>>& patch_cells,
