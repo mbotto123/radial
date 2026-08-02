@@ -80,7 +80,7 @@ namespace radial
 
     unsigned int min_points = radial::get_min_points<dim>(order_enriched);
 
-    std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(min_points);
+    radial::patch_basis<dim> patch_basis_funcs(min_points);
     radial::create_patch_basis(order, patch_basis_funcs);
     //-------------------------------------------------------------------------//
 

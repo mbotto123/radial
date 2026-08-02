@@ -12,12 +12,15 @@ namespace radial
 {
   using namespace dealii;
 
+  // Type aliases for use with the Radial library
   template <int dim>
   using cell_pointer = typename DoFHandler<dim>::active_cell_iterator;
+  template <int dim>
+  using patch_basis = typename std::vector<std::function<double(Point<dim>)>>;
 
   template <int dim>
   void create_patch_basis(const unsigned int order,
-                          std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs);
+                          radial::patch_basis<dim>& patch_basis_funcs);
 
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
@@ -56,7 +59,7 @@ namespace radial
                            const std::set<types::global_dof_index>& patch_dofs,
                            const Point<dim>& patch_coord_min,
                            const Point<dim>& patch_coord_max,
-                           const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
+                           const radial::patch_basis<dim>& patch_basis_funcs,
                            const FiniteElement<dim>& fe,
                            const Vector<double>& solution,
                            FEValues<dim>& fe_values_nodes,

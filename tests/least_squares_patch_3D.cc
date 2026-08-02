@@ -102,7 +102,7 @@ void least_squares_patch_test_P1_3D()
   //-------------------------------------------------------------------------//
   // Create monomial basis for least-squares fit
 
-  std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(basis_size);
+  radial::patch_basis<dim> patch_basis_funcs(basis_size);
   radial::create_patch_basis(order, patch_basis_funcs);
   //-------------------------------------------------------------------------//
 
@@ -248,7 +248,7 @@ void least_squares_patch_test_P2_3D()
   //-------------------------------------------------------------------------//
   // Create monomial basis for least-squares fit
 
-  std::vector<std::function<double(Point<dim>)>> patch_basis_funcs(basis_size);
+  radial::patch_basis<dim> patch_basis_funcs(basis_size);
   radial::create_patch_basis(order, patch_basis_funcs);
   //-------------------------------------------------------------------------//
 

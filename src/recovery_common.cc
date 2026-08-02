@@ -32,9 +32,9 @@ namespace radial
                             std::vector<std::vector<double>>& vertex_to_weight);
 
   template void create_patch_basis<2>(const unsigned int order,
-                                      std::vector<std::function<double(Point<2>)>>& patch_basis_funcs);
+                                      radial::patch_basis<2>& patch_basis_funcs);
   template void create_patch_basis<3>(const unsigned int order,
-                                      std::vector<std::function<double(Point<3>)>>& patch_basis_funcs);
+                                      radial::patch_basis<3>& patch_basis_funcs);
 
   template void
   find_patch_bounding_box<2>(const DoFHandler<2>& dof_handler,
@@ -73,7 +73,7 @@ namespace radial
                          const std::set<types::global_dof_index>& patch_dofs,
                          const Point<2>& patch_coord_min,
                          const Point<2>& patch_coord_max,
-                         const std::vector<std::function<double(Point<2>)>>& patch_basis_funcs,
+                         const radial::patch_basis<2>& patch_basis_funcs,
                          const FiniteElement<2>& fe,
                          const Vector<double>& solution,
                          FEValues<2>& fe_values_nodes,
@@ -84,7 +84,7 @@ namespace radial
                          const std::set<types::global_dof_index>& patch_dofs,
                          const Point<3>& patch_coord_min,
                          const Point<3>& patch_coord_max,
-                         const std::vector<std::function<double(Point<3>)>>& patch_basis_funcs,
+                         const radial::patch_basis<3>& patch_basis_funcs,
                          const FiniteElement<3>& fe,
                          const Vector<double>& solution,
                          FEValues<3>& fe_values_nodes,

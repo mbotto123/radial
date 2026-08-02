@@ -195,7 +195,7 @@ namespace radial
   // patch of elements, to be used for a least-squares problem on the patch.
   template <int dim>
   void create_patch_basis(const unsigned int order,
-                          std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs)
+                          radial::patch_basis<dim>& patch_basis_funcs)
   {
     if (dim == 2)
     {
@@ -618,7 +618,7 @@ namespace radial
                            const std::set<types::global_dof_index>& patch_dofs,
                            const Point<dim>& patch_coord_min,
                            const Point<dim>& patch_coord_max,
-                           const std::vector<std::function<double(Point<dim>)>>& patch_basis_funcs,
+                           const radial::patch_basis<dim>& patch_basis_funcs,
                            const FiniteElement<dim>& fe,
                            const Vector<double>& solution,
                            FEValues<dim>& fe_values_nodes,
