@@ -65,6 +65,17 @@ namespace radial
                            FEValues<dim>& fe_values_nodes,
                            Vector<double>& lsq_coeffs,
                            double& rcond);
+
+  template<int dim>
+  void least_squares_patch_discrete(const std::vector<Point<dim>>& dof_coords,
+                                    const Vector<double>& solution,
+                                    const std::set<types::global_dof_index>& patch_dofs,
+                                    const unsigned int& min_points,
+                                    const Point<dim>& patch_coord_min,
+                                    const Point<dim>& patch_coord_max,
+                                    const radial::patch_basis<dim>& patch_basis_funcs,
+                                    Vector<double>& lsq_coeffs,
+                                    double& rcond);
 }
 
 #endif // RECOVERY_COMMON_H

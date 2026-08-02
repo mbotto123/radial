@@ -90,4 +90,25 @@ namespace radial
                          FEValues<3>& fe_values_nodes,
                          Vector<double>& lsq_coeffs,
                          double& rcond);
+
+  template void
+  least_squares_patch_discrete<2>(const std::vector<Point<2>>& dof_coords,
+                                  const Vector<double>& solution,
+                                  const std::set<types::global_dof_index>& patch_dofs,
+                                  const unsigned int& min_points,
+                                  const Point<2>& patch_coord_min,
+                                  const Point<2>& patch_coord_max,
+                                  const radial::patch_basis<2>& patch_basis_funcs,
+                                  Vector<double>& lsq_coeffs,
+                                  double& rcond);
+  template void
+  least_squares_patch_discrete<3>(const std::vector<Point<3>>& dof_coords,
+                                  const Vector<double>& solution,
+                                  const std::set<types::global_dof_index>& patch_dofs,
+                                  const unsigned int& min_points,
+                                  const Point<3>& patch_coord_min,
+                                  const Point<3>& patch_coord_max,
+                                  const radial::patch_basis<3>& patch_basis_funcs,
+                                  Vector<double>& lsq_coeffs,
+                                  double& rcond);
 } // namespace radial

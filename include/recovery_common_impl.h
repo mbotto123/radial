@@ -712,4 +712,112 @@ namespace radial
     gsl_vector_free(tau);
     gsl_vector_free(rhs);
   }
+
+  // Construct a discrete least-squares problem on a patch of cells, and solve
+  // it if the system matrix is well-conditioned enough.
+  //
+  // This function is specialized to loop over nodes rather than elements. This
+  // avoids having to check if a node has already been visited, as is necessary
+  // when working in an element-based way. The caveat is that the bases used all
+  // need to be nodal.
+  //
+  // The inputs can be roughly grouped into 4 groups as follows:
+  // 1. `dof_coords` and `solution` are "global" vectors, i.e. they contain info
+  //    defined over the entire mesh. `dof_coords` has the physical coordinates
+  //    of all nodes in the mesh, and `solution` has the finite element solution
+  //    value at each node in the mesh. These will be indexed into to extract
+  //    the relevant values on the patch we are working on.
+  // 2. `patch_dofs` is a set containing the global DOF indices of the DOFs on
+  //    the patch. These indices will be used to index into the global vectors
+  //    discussed above. The length of `patch_dofs` also provides the number of
+  //    rows in the least-squares system matrix. To fully define the dimensions
+  //    of the matrix, `min_points` provides the number of columns. `patch_dofs`
+  //    must be larger than `min_points` for the system to be solvable.
+  // 3. `patch_coord_min`, `patch_coord_max`, and `patch_basis_funcs` provide
+  //    information necessary to compute the entries of the least-squares system
+  //    matrix. This information includes the coordinates of the bounding box
+  //    that contains the patch (used to scale the coordinates of the patch
+  //    nodes) as well as the patch basis functions.
+  // 4. `lsq_coeffs` and `rcond` are the coefficients obtained from the
+  //    least-squares solve and the estimated reciprocal condition number of the
+  //    least-squares system, respectively. A nuance about `lsq_coeffs` is that
+  //    it is only actually modified if the least-squares system is considered
+  //    to be well-conditioned enough to solve. Otherwise, the solve is skipped,
+  //    and `lsq_coeffs` passes through this function without being modified.
+  //    On the other hand, `rcond` will always have a value after this function,
+  //    because estimating it does not require the solve step to actually happen
+  //    since it can be estimated purely based on the QR decompisition.
+  template<int dim>
+  void least_squares_patch_discrete(const std::vector<Point<dim>>& dof_coords,
+                                    const Vector<double>& solution,
+                                    const std::set<types::global_dof_index>& patch_dofs,
+                                    const unsigned int& min_points,
+                                    const Point<dim>& patch_coord_min,
+                                    const Point<dim>& patch_coord_max,
+                                    const radial::patch_basis<dim>& patch_basis_funcs,
+                                    Vector<double>& lsq_coeffs,
+                                    double& rcond)
+  {
+    // Create RHS and system matrix for discrete least-squares. We use GSL
+    // so that condition number estimation can be done once the system
+    // matrix is filled.
+    gsl_vector *rhs = gsl_vector_alloc(patch_dofs.size());
+    gsl_matrix *A = gsl_matrix_alloc(patch_dofs.size(), min_points);
+
+    // Construct least-squares system
+    unsigned int eval_count = 0;
+    for (const auto& dof : patch_dofs)
+    {
+      // Sample solution at the patch node
+      gsl_vector_set(rhs, eval_count, solution[dof]);
+
+      Point<dim> node_physical_coords = dof_coords[dof];
+
+      Point<dim> node_scaled_coords;
+      for (int d = 0; d < dim; d++)
+      {
+        node_scaled_coords(d) = -1.0 +
+                                2.0*(node_physical_coords(d) - patch_coord_min(d)) /
+                                (patch_coord_max(d) - patch_coord_min(d));
+      }
+
+      for (unsigned int monomial_index = 0; monomial_index < min_points; monomial_index++)
+      {
+        gsl_matrix_set(A, eval_count, monomial_index,
+                       patch_basis_funcs[monomial_index](node_scaled_coords));
+      }
+
+      eval_count++;
+    }
+
+    // Compute QR decomposition of least-squares system matrix
+    gsl_vector *tau = gsl_vector_alloc(min_points);
+    gsl_linalg_QR_decomp(A, tau);
+
+    // Estimate reciprocal condition number
+    gsl_vector *work = gsl_vector_alloc(3 * min_points);
+    gsl_linalg_QR_rcond(A, &rcond, work);
+    gsl_vector_free(work);
+
+    // If the condition number is good enough, solve the system
+    double rcond_tol = std::numeric_limits<double>::epsilon() * 1e1;
+    if (rcond > rcond_tol)
+    {
+      gsl_vector *x = gsl_vector_alloc(min_points);
+      gsl_vector *residual = gsl_vector_alloc(patch_dofs.size());
+
+      gsl_linalg_QR_lssolve(A, tau, rhs, x, residual);
+
+      // Copy solution into deal.ii Vector
+      for (unsigned int i = 0; i < min_points; i++)
+        lsq_coeffs(i) = gsl_vector_get(x, i);
+
+      gsl_vector_free(x);
+      gsl_vector_free(residual);
+    }
+
+    gsl_matrix_free(A);
+    gsl_vector_free(tau);
+    gsl_vector_free(rhs);
+  }
 } // namespace radial
