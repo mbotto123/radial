@@ -4,6 +4,8 @@
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/fe/fe_values.h>
+#include <deal.II/fe/fe_simplex_p.h>
+#include <deal.II/fe/mapping_p1.h>
 
 #include <deal.II/base/point.h>
 #include <deal.II/base/table.h>
@@ -61,6 +63,131 @@ namespace radial
       }
       
       ++cell_enriched_it; // This iterator needs to be incremented manually
+    }
+  }
+
+  // Fill data structures containing a mapping from each vertex to relevant
+  // information that lives on its baseline patch, i.e. all of the cells
+  // directly attached to it.
+  //
+  // These data structures enable working from a nodal perspective rather than
+  // an elemental perspective. They can be used to perform loops over data
+  // defined uniquely at each node of a patch, rather than having to loop over
+  // the elements in the patch and extract this data element by element.
+  //
+  // This function assumes that the bases you are working with are all nodal
+  // bases.
+  //
+  // `vertex_to_vertex` is a vector of sets, with each set containing the
+  // vertices that live on the baseline patch of the vertex that set is
+  // associated with.
+  //
+  // `vertex_to_dof` is a vector of sets, with each set containing the
+  // DOFs that live on the baseline patch of the vertex that set is
+  // associated with.
+  //
+  // `vertex_to_dof` is a vector of vectors, with each vector containing the
+  // enriched DOFs that live on the baseline patch of the vertex that set is
+  // associated with. The reason this is a vector of vectors and not a vector
+  // of sets is that order matters here, since the order needs to match the
+  // order of the entries of `vertex_to_weight`.
+  template <int dim>
+  void create_vertex_mappings(const DoFHandler<dim>& dof_handler,
+                              const DoFHandler<dim>& dof_handler_enriched,
+                              std::vector<std::set<types::global_vertex_index>>& vertex_to_vertex,
+                              std::vector<std::set<types::global_dof_index>>& vertex_to_dof,
+                              std::vector<std::vector<types::global_dof_index>>& vertex_to_dof_enriched,
+                              std::vector<std::vector<double>>& vertex_to_weight)
+  {
+    // Base finite element field
+    const FiniteElement<dim>& fe = dof_handler.get_fe();
+    const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+    const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
+
+    // Enriched finite element field
+    const FiniteElement<dim>& fe_enriched = dof_handler_enriched.get_fe();
+    const unsigned int dofs_per_cell_enriched = fe_enriched.n_dofs_per_cell();
+    std::vector<types::global_dof_index> local_dof_indices_enriched(dofs_per_cell_enriched);
+
+    // Reference coordinates of the enriched Lagrange nodes
+    Quadrature<dim> lagrange_nodes_enriched(fe_enriched.get_unit_support_points());
+
+    // P1 finite element used to compute barycentric coordinates
+    const FE_SimplexP<dim> fe_barycentric(1);
+    // Q1 mapping used for barycentric coordinates
+    MappingP1<dim> mapping_barycentric;
+    // DoFHandler used for barycentric coordinates. We create this because deal.ii
+    // doesn't like an FEValues object to be "reinit"ed using a DoFHandler that
+    // was created using a different finite element than what is passed to the
+    // FEValues object. That mismatch triggers an Assert only in Debug mode; in
+    // Release mode, it is allowed.
+    DoFHandler<dim> dof_handler_barycentric(triangulation);
+    dof_handler_barycentric.distribute_dofs(fe_barycentric);
+
+    // Used to get barycentric coordinates of the enriched Lagrange nodes
+    FEValues<dim> barycentric_nodes_enriched(mapping_barycentric,
+                                             fe_barycentric,
+                                             lagrange_nodes_enriched,
+                                             update_values);
+
+    // Define size for all vectors of mappings
+    vertex_to_vertex.resize(triangulation.n_vertices());
+    vertex_to_dof.resize(triangulation.n_vertices());
+    vertex_to_dof_enriched.resize(triangulation.n_vertices());
+    vertex_to_weight.resize(triangulation.n_vertices());
+
+    // Get iterator for enriched field explicitly. We need to take care of incrementing
+    // this iterator manually, so that it keeps up with the iterator we're looping over.
+    radial::cell_pointer<dim> cell_enriched = dof_handler_enriched.begin();
+
+    radial::cell_pointer<dim> cell_barycentric = dof_handler_barycentric.begin();
+
+    for (const auto &cell : dof_handler.active_cell_iterators())
+    {
+      // Get information about DOFs and barycentric weights on this cell
+      cell->get_dof_indices(local_dof_indices);
+      cell_enriched->get_dof_indices(local_dof_indices_enriched);
+      barycentric_nodes_enriched.reinit(cell_barycentric);
+
+      for (const auto v_patch : cell->vertex_indices())
+      {
+        // The patch-central vertex whose patch we are adding to
+        types::global_vertex_index vertex = cell->vertex_index(v_patch);
+
+        // Add this cell's vertices to the patch
+        for (const auto v_cell : cell->vertex_indices())
+        {
+          types::global_vertex_index neighbor = cell->vertex_index(v_cell);
+          vertex_to_vertex[vertex].insert(neighbor);
+        }
+
+        // Add this cell's solution DOFs to the patch
+        vertex_to_dof[vertex].insert(local_dof_indices.begin(),
+                                     local_dof_indices.end());
+
+        // Add this cell's enriched DOFs and barycentric weights to the patch
+        for (unsigned int i = 0; i < dofs_per_cell_enriched; i++)
+        {
+          types::global_dof_index dof = local_dof_indices_enriched[i];
+
+          bool dof_exists = (std::find(vertex_to_dof_enriched[vertex].begin(),
+                                       vertex_to_dof_enriched[vertex].end(),
+                                       dof) != vertex_to_dof_enriched[vertex].end());
+          if (!dof_exists)
+          {
+            vertex_to_dof_enriched[vertex].push_back(dof);
+
+            double weight = barycentric_nodes_enriched.shape_value(v_patch, i);
+            vertex_to_weight[vertex].push_back(weight);
+          }
+        }
+      }
+
+      // These iterators need to be incrememnted manually
+      ++cell_enriched;
+      ++cell_barycentric;
     }
   }
 

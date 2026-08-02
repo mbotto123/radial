@@ -25,6 +25,14 @@ namespace radial
                              std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell,
                              std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
 
+  template <int dim>
+  void create_vertex_mappings(const DoFHandler<dim>& dof_handler,
+                              const DoFHandler<dim>& dof_handler_enriched,
+                              std::vector<std::set<types::global_vertex_index>>& vertex_to_vertex,
+                              std::vector<std::set<types::global_dof_index>>& vertex_to_dof,
+                              std::vector<std::vector<types::global_dof_index>>& vertex_to_dof_enriched,
+                              std::vector<std::vector<double>>& vertex_to_weight);
+
   template<int dim>
   void find_patch_bounding_box(const DoFHandler<dim>& dof_handler,
                                const std::set<types::global_vertex_index>& patch_vertices,

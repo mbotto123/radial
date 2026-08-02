@@ -16,6 +16,21 @@ namespace radial
                                          std::vector<std::vector<radial::cell_pointer<3>>>& vertex_to_cell,
                                          std::vector<std::vector<radial::cell_pointer<3>>>& vertex_to_cell_enriched);
 
+  template void
+  create_vertex_mappings<2>(const DoFHandler<2>& dof_handler,
+                            const DoFHandler<2>& dof_handler_enriched,
+                            std::vector<std::set<types::global_vertex_index>>& vertex_to_vertex,
+                            std::vector<std::set<types::global_dof_index>>& vertex_to_dof,
+                            std::vector<std::vector<types::global_dof_index>>& vertex_to_dof_enriched,
+                            std::vector<std::vector<double>>& vertex_to_weight);
+  template void
+  create_vertex_mappings<3>(const DoFHandler<3>& dof_handler,
+                            const DoFHandler<3>& dof_handler_enriched,
+                            std::vector<std::set<types::global_vertex_index>>& vertex_to_vertex,
+                            std::vector<std::set<types::global_dof_index>>& vertex_to_dof,
+                            std::vector<std::vector<types::global_dof_index>>& vertex_to_dof_enriched,
+                            std::vector<std::vector<double>>& vertex_to_weight);
+
   template void create_patch_basis<2>(const unsigned int order,
                                       std::vector<std::function<double(Point<2>)>>& patch_basis_funcs);
   template void create_patch_basis<3>(const unsigned int order,
