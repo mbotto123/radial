@@ -471,6 +471,48 @@ namespace radial
   // this computation will be valid for curved meshes as well as linear meshes.
   // On a curved mesh, it's possible that the minimum/maximum coordinates will
   // come from an edge node rather than a vertex.
+  //
+  // The vector `dof_coords` is expected to contain the physical coordinates of
+  // all of the nodes in the mesh.
+  template <int dim>
+  void find_patch_bounding_box(const std::vector<Point<dim>>& dof_coords,
+                               const std::set<types::global_dof_index>& patch_dofs,
+                               Point<dim>& coord_min, Point<dim>& coord_max)
+  {
+    std::vector<std::vector<double>> coord_patch_nodes(dim);
+    for (int d = 0; d < dim; d++)
+      coord_patch_nodes[d].resize(patch_dofs.size());
+
+    int node_count = 0;
+    for (const auto& dof : patch_dofs)
+    {
+      for (int d = 0; d < dim; d++)
+        coord_patch_nodes[d][node_count] = dof_coords[dof](d);
+
+      node_count++;
+    }
+
+    // Find limits of the bounding box that contains the patch
+    for (int d = 0; d < dim; d++)
+    {
+      coord_min(d) = *std::min_element(coord_patch_nodes[d].begin(),
+                                       coord_patch_nodes[d].end());
+      coord_max(d) = *std::max_element(coord_patch_nodes[d].begin(),
+                                       coord_patch_nodes[d].end());
+    }
+  }
+
+  // Find the bounding box of a patch of cells.
+  //
+  // Implemented by finding the minimum and maximum physical coordinates over
+  // all nodes in the patch. Note that we use nodes rather than vertices so that
+  // this computation will be valid for curved meshes as well as linear meshes.
+  // On a curved mesh, it's possible that the minimum/maximum coordinates will
+  // come from an edge node rather than a vertex.
+  //
+  // In this version of the function, the nodal coordinates are obtained by
+  // evaluating them on the fly on each element, rather than extracting them
+  // from a global vector of pre-computed nodal coordinates.
   template <int dim>
   void find_patch_bounding_box(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                                const std::set<types::global_dof_index>& patch_dofs,

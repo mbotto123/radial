@@ -38,6 +38,10 @@ namespace radial
                                const std::set<types::global_vertex_index>& patch_vertices,
                                Point<dim>& coord_min, Point<dim>& coord_max);
   template <int dim>
+  void find_patch_bounding_box(const std::vector<Point<dim>>& dof_coords,
+                               const std::set<types::global_dof_index>& patch_dofs,
+                               Point<dim>& coord_min, Point<dim>& coord_max);
+  template <int dim>
   void find_patch_bounding_box(const std::vector<radial::cell_pointer<dim>>& patch_cells,
                                const std::set<types::global_dof_index>& patch_dofs,
                                FEValues<dim>& fe_values_nodes,

@@ -2,6 +2,8 @@
 #include <deal.II/grid/grid_generator.h>
 
 #include <deal.II/dofs/dof_handler.h>
+#include <deal.II/dofs/dof_tools.h>
+
 #include <deal.II/fe/fe_simplex_p.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_p1.h>
@@ -79,7 +81,63 @@ void patch_bounding_box_test_2D_linear_mesh(const int order)
   std::cout << "Max y = " << coord_max(1) << std::endl;
 }
 
-void patch_bounding_box_test_2D_general_mesh(const int order)
+void patch_bounding_box_test_2D_general_mesh_nodal(const int order)
+{
+  const int dim = 2;
+
+  //-------------------------------------------------------------------------//
+  // Mesh
+  Triangulation<dim> triangulation;
+  GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Base finite element field
+  const FE_SimplexP<dim> fe(order);
+  MappingP1<dim> mapping;
+
+  DoFHandler<dim> dof_handler(triangulation); 
+  dof_handler.distribute_dofs(fe);
+
+  // Nodal coordinates
+  std::vector<Point<dim>> dof_coords(dof_handler.n_dofs());
+  DoFTools::map_dofs_to_support_points(mapping, dof_handler, dof_coords);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Enriched finite element field
+  const int order_enriched = order + 1;
+  const FE_SimplexP<dim> fe_enriched(order_enriched);
+
+  DoFHandler<dim> dof_handler_enriched(triangulation); 
+  dof_handler_enriched.distribute_dofs(fe_enriched);
+  //-------------------------------------------------------------------------//
+
+  std::vector<std::set<types::global_vertex_index>> vertex_to_vertex;
+  std::vector<std::set<types::global_dof_index>> vertex_to_dof;
+  std::vector<std::vector<types::global_dof_index>> vertex_to_dof_enriched;
+  std::vector<std::vector<double>> vertex_to_weight;
+
+  radial::create_vertex_mappings(dof_handler, dof_handler_enriched,
+                                 vertex_to_vertex, vertex_to_dof,
+                                 vertex_to_dof_enriched, vertex_to_weight);
+
+  // Test bounding box for central vertex patch. Should coincide with the
+  // extents of the domain, i.e. 0 to 1 in all directions.
+  int v = 4;
+  std::set<types::global_dof_index> patch_dofs = vertex_to_dof[v];
+
+  Point<dim> coord_min, coord_max;
+  radial::find_patch_bounding_box(dof_coords, patch_dofs,
+                                  coord_min, coord_max);
+
+  std::cout << "Min x = " << coord_min(0) << std::endl;
+  std::cout << "Min y = " << coord_min(1) << std::endl;
+  std::cout << "Max x = " << coord_max(0) << std::endl;
+  std::cout << "Max y = " << coord_max(1) << std::endl;
+}
+
+void patch_bounding_box_test_2D_general_mesh_elemental(const int order)
 {
   const int dim = 2;
 
@@ -155,6 +213,9 @@ int main()
 
   // Still testing on linear meshes, but the bounding box function does not
   // assume they are linear in its implementation.
-  patch_bounding_box_test_2D_general_mesh(1);
-  patch_bounding_box_test_2D_general_mesh(2);
+  patch_bounding_box_test_2D_general_mesh_nodal(1);
+  patch_bounding_box_test_2D_general_mesh_nodal(2);
+
+  patch_bounding_box_test_2D_general_mesh_elemental(1);
+  patch_bounding_box_test_2D_general_mesh_elemental(2);
 }
