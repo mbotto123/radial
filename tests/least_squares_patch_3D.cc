@@ -74,9 +74,6 @@ void least_squares_patch_discrete_test_P1_3D()
   DoFHandler<dim> dof_handler(triangulation); 
   dof_handler.distribute_dofs(fe);
 
-  const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
-  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-
   // Nodal coordinates
   std::vector<Point<dim>> dof_coords(dof_handler.n_dofs());
   DoFTools::map_dofs_to_support_points(mapping, dof_handler, dof_coords);
@@ -344,9 +341,6 @@ void least_squares_patch_discrete_test_P2_3D()
 
   DoFHandler<dim> dof_handler(triangulation); 
   dof_handler.distribute_dofs(fe);
-
-  const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
-  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
 
   // Nodal coordinates
   std::vector<Point<dim>> dof_coords(dof_handler.n_dofs());
