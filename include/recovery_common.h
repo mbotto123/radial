@@ -76,6 +76,16 @@ namespace radial
                                     const radial::patch_basis<dim>& patch_basis_funcs,
                                     Vector<double>& lsq_coeffs,
                                     double& rcond);
+
+  template<int dim>
+  void evaluate_patch_polynomial(const std::vector<Point<dim>>& dof_coords_enriched,
+                                 const std::vector<types::global_dof_index>& patch_dofs_enriched,
+                                 const std::vector<double>& patch_weights,
+                                 const Point<dim>& patch_coord_min,
+                                 const Point<dim>& patch_coord_max,
+                                 const radial::patch_basis<dim>& patch_basis_funcs,
+                                 const Vector<double>& lsq_coeffs,
+                                 Vector<double>& solution_enriched);
 }
 
 #endif // RECOVERY_COMMON_H

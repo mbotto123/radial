@@ -820,4 +820,75 @@ namespace radial
     gsl_vector_free(tau);
     gsl_vector_free(rhs);
   }
+
+  // Given the coefficients of a polynomial obtained by solving a least-squares
+  // problem on a patch, evaluate the polynomial at the nodes of the baseline
+  // patch corresponding to the nodes of the enriched solution we want to compute.
+  //
+  // Note that we are not evaluating on every node of the patch that was actually
+  // used to solve the least-squares problem. Rather, this is only the baseline
+  // patch, i.e. all of the cells that are directly attached to a vertex.
+  //
+  // The `patch_weights` determine how much the value computed at each node
+  // contributes to the enriched solution. The weights corresponding to the nodes
+  // on the boundary of the baseline patch are zero, so those nodes don't end up
+  // contributing anything.
+  //
+  // The inputs can be roughly grouped into 4 groups as follows:
+  // 1. `dof_coords_enriched` is a "global" vector, i.e. it contains info
+  //    defined over the entire mesh. It has the physical coordinates of all
+  //    enriched solution nodes in the mesh.
+  // 2. `patch_dofs_enriched` is a vector containing the global DOF indices of the
+  //    enriched solution DOFs on the patch. These indices will be used to index
+  //    into the global vector discussed above. `patch_weights` is a vector
+  //    containing the barycentric weights corresponding to each global DOF in
+  //    `patch_dofs_enriched`.
+  // 3. `patch_coord_min`, `patch_coord_max`, `patch_basis_funcs`, and `lsq_coeffs`
+  //    provide information necessary to evaluate the least-squares polynomial at the
+  //    nodes of the patch. This information includes the coordinates of the
+  //    bounding box that contains the patch (used to scale the coordinates of the
+  //    patch nodes) as well as the patch basis functions and the polynomial
+  //    coefficients.
+  // 4. `solution_enriched` is another "global" vector. This is the vector into
+  //    which the patch polynomial evaluations are accumulated to produce the
+  //    nodal values of the enriched solution. This vector must be initialized
+  //    with zeros, since we need to accumulate into it.
+  template<int dim>
+  void evaluate_patch_polynomial(const std::vector<Point<dim>>& dof_coords_enriched,
+                                 const std::vector<types::global_dof_index>& patch_dofs_enriched,
+                                 const std::vector<double>& patch_weights,
+                                 const Point<dim>& patch_coord_min,
+                                 const Point<dim>& patch_coord_max,
+                                 const radial::patch_basis<dim>& patch_basis_funcs,
+                                 const Vector<double>& lsq_coeffs,
+                                 Vector<double>& solution_enriched)
+  {
+    int n_patch_dofs = patch_dofs_enriched.size();
+
+    for (int patch_dof = 0; patch_dof < n_patch_dofs; patch_dof++)
+    {
+      types::global_dof_index dof = patch_dofs_enriched[patch_dof];
+
+      Point<dim> node_physical_coords = dof_coords_enriched[dof];
+
+      Point<dim> node_scaled_coords;
+      for (int d = 0; d < dim; d++)
+      {
+        node_scaled_coords(d) = -1.0 +
+                                2.0*(node_physical_coords(d) - patch_coord_min(d)) /
+                                (patch_coord_max(d) - patch_coord_min(d));
+      }
+
+      double solution_enriched_node = 0;
+      for (unsigned int monomial_index = 0; monomial_index < lsq_coeffs.size(); monomial_index++)
+      {
+        solution_enriched_node += lsq_coeffs(monomial_index) *
+                                  patch_basis_funcs[monomial_index](node_scaled_coords);
+      }
+
+      // Accumulate this patch's enriched solution contribution, weighted by
+      // the node's barycentric coordinate.
+      solution_enriched(dof) += patch_weights[patch_dof] * solution_enriched_node;
+    }
+  }
 } // namespace radial

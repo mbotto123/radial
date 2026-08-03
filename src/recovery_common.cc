@@ -111,4 +111,23 @@ namespace radial
                                   const radial::patch_basis<3>& patch_basis_funcs,
                                   Vector<double>& lsq_coeffs,
                                   double& rcond);
+
+  template void
+  evaluate_patch_polynomial<2>(const std::vector<Point<2>>& dof_coords_enriched,
+                               const std::vector<types::global_dof_index>& patch_dofs_enriched,
+                               const std::vector<double>& patch_weights,
+                               const Point<2>& patch_coord_min,
+                               const Point<2>& patch_coord_max,
+                               const radial::patch_basis<2>& patch_basis_funcs,
+                               const Vector<double>& lsq_coeffs,
+                               Vector<double>& solution_enriched);
+  template void
+  evaluate_patch_polynomial<3>(const std::vector<Point<3>>& dof_coords_enriched,
+                               const std::vector<types::global_dof_index>& patch_dofs_enriched,
+                               const std::vector<double>& patch_weights,
+                               const Point<3>& patch_coord_min,
+                               const Point<3>& patch_coord_max,
+                               const radial::patch_basis<3>& patch_basis_funcs,
+                               const Vector<double>& lsq_coeffs,
+                               Vector<double>& solution_enriched);
 } // namespace radial

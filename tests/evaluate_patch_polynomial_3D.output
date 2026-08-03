@@ -1,0 +1,12 @@
+P1 exact value = 4.25
+P1 test value = 4.25
+P1 Passed (Test Point 1)
+P1 exact value = -4.75
+P1 test value = -4.75
+P1 Passed (Test Point 2)
+P2 exact value = -10.5926
+P2 test value = -10.5926
+P2 Passed (Test Point 1)
+P2 exact value = -1.11111
+P2 test value = -1.11111
+P2 Passed (Test Point 2)
