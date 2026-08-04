@@ -326,6 +326,8 @@ namespace radial
                                    vertex_to_vertex, vertex_to_dof,
                                    vertex_to_dof_enriched, vertex_to_weight);
     //------------------------------------------------------------------------//
+
+    //------------------------------------------------------------------------//
     // Create monomial basis for least-squares fit
 
     unsigned int min_points = radial::get_min_points<dim>(order_enriched);
@@ -447,5 +449,6 @@ namespace radial
                                         coord_min, coord_max,
                                         patch_basis_funcs, a, solution_enriched);
     }
+    //------------------------------------------------------------------------//
   }
 } // namespace radial
