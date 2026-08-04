@@ -245,8 +245,8 @@ int main()
       timer.start();
 
       Vector<double> solution_enriched(dof_handler_enriched.n_dofs());
-      radial::recover_solution_ppr(dof_handler, mapping, solution,
-                                   dof_handler_enriched, solution_enriched);
+      radial::recover_solution_ppr_discrete(dof_handler, mapping, solution,
+                                            dof_handler_enriched, solution_enriched);
 
       timer.stop();
       std::cout << "  Recovery: " << timer.last_wall_time() << std::endl;
