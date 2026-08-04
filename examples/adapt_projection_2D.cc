@@ -27,7 +27,6 @@
 #include <fstream>
 #include <cmath>
 
-#include <set>
 #include <functional>
 
 #include <gmsh.h>
