@@ -146,9 +146,132 @@ void least_squares_patch_discrete_test_P1_3D()
   double relative_error = std::abs(exact_val - test_val) / exact_val;
 
   if (relative_error < 1e-14)
-    std::cout << "P" << order << " Passed" << std::endl;
+    std::cout << "Discrete P" << order << " Passed" << std::endl;
   else
-    std::cout << "P" << order << " Failed" << std::endl;
+    std::cout << "Discrete P" << order << " Failed" << std::endl;
+}
+
+void least_squares_patch_integral_test_P1_3D()
+{
+  const int dim = 3;
+  const int order = 1;
+
+  //-------------------------------------------------------------------------//
+  // Function to interpolate from
+
+  const int num_poly_coeffs = radial::get_min_points<dim>(order);
+
+  // Monomial coefficients
+  std::vector<double> coeffs(num_poly_coeffs);
+  coeffs = {1, -3, 4, 1};
+
+  // Monomial exponents
+  const double exponents_array[] = {0, 0, 0,  // x^0 y^0 z^0
+                                    1, 0, 0,  // x^1 y^0 z^0
+                                    0, 1, 0,  // x^0 y^1 z^0
+                                    0, 0, 1}; // x^0 y^0 z^1
+  Table<2, double> exponents(num_poly_coeffs, dim, exponents_array);
+
+  Functions::Polynomial<dim> linear(exponents, coeffs);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Mesh
+  Triangulation<dim> triangulation;
+  GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Base finite element field
+  const FE_SimplexP<dim> fe(order);
+  MappingP1<dim> mapping;
+
+  DoFHandler<dim> dof_handler(triangulation); 
+  dof_handler.distribute_dofs(fe);
+
+  const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+  // Nodal coordinates
+  std::vector<Point<dim>> dof_coords(dof_handler.n_dofs());
+  DoFTools::map_dofs_to_support_points(mapping, dof_handler, dof_coords);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Compute linear interpolant
+  Vector<double> interpolant(dof_handler.n_dofs());
+
+  VectorTools::interpolate(dof_handler, linear, interpolant);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Enriched finite element field
+  const int order_enriched = order + 1;
+  const FE_SimplexP<dim> fe_enriched(order_enriched);
+
+  DoFHandler<dim> dof_handler_enriched(triangulation); 
+  dof_handler_enriched.distribute_dofs(fe_enriched);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Create monomial basis for least-squares fit
+
+  const int basis_size = radial::get_min_points<dim>(order_enriched);
+
+  radial::patch_basis<dim> patch_basis_funcs(basis_size);
+  radial::create_patch_basis(order, patch_basis_funcs);
+  //-------------------------------------------------------------------------//
+
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+
+  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
+                                vertex_to_cell, vertex_to_cell_enriched);
+
+  std::set<types::global_dof_index> patch_dofs;
+
+  // Solve least-squares problem for central vertex patch. This patch does not
+  // require any growth iterations.
+  int v = 13;
+  std::vector<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
+  for (const auto &cell: vertex_to_cell[v])
+  {
+    cell->get_dof_indices(local_dof_indices);
+    for (unsigned int i = 0; i < dofs_per_cell; i++)
+      patch_dofs.insert(local_dof_indices[i]);
+  }
+
+  // Vector of least-squares coefficients
+  Vector<double> a(basis_size);
+
+  Point<dim> coord_min, coord_max;
+  radial::find_patch_bounding_box(dof_coords, patch_dofs,
+                                  coord_min, coord_max);
+  radial::least_squares_patch_integral(patch_cells, coord_min, coord_max,
+                                       patch_basis_funcs, mapping, fe,
+                                       interpolant, a);
+
+  // Test equivalence at a point
+  Point<dim> test_point = {0.5, 0.5, 0.5};
+  // Since the least-squares problem is solved with normalized coordinates,
+  // use the normalized coordinates when passing the point in to the patch
+  // basis functions.
+  Point<dim> test_point_normalized = {0.0, 0.0, 0.0};
+
+  double exact_val = linear.value(test_point);
+  std::cout << "P" << order <<  " exact value = " << exact_val << std::endl;
+
+  double test_val = 0;
+  for (int i = 0; i < basis_size; i++)
+    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+  std::cout << "P" << order <<  " test value = " << test_val << std::endl;
+
+  double relative_error = std::abs(exact_val - test_val) / exact_val;
+
+  if (relative_error < 1e-13)
+    std::cout << "Integral P" << order << " Passed" << std::endl;
+  else
+    std::cout << "Integral P" << order << " Failed" << std::endl;
 }
 
 void least_squares_patch_test_P1_3D()
@@ -414,9 +537,138 @@ void least_squares_patch_discrete_test_P2_3D()
   double relative_error = std::abs(exact_val - test_val) / exact_val;
 
   if (relative_error < 1e-14)
-    std::cout << "P" << order << " Passed" << std::endl;
+    std::cout << "Discrete P" << order << " Passed" << std::endl;
   else
-    std::cout << "P" << order << " Failed" << std::endl;
+    std::cout << "Discrete P" << order << " Failed" << std::endl;
+}
+
+void least_squares_patch_integral_test_P2_3D()
+{
+  const int dim = 3;
+  const int order = 2;
+
+  //-------------------------------------------------------------------------//
+  // Function to interpolate from
+
+  const int num_poly_coeffs = radial::get_min_points<dim>(order);
+
+  // Monomial coefficients
+  std::vector<double> coeffs(num_poly_coeffs);
+  coeffs = {1, -3, 4, 1, 2, 7, 6, -5, -9, 1};
+
+  // Monomial exponents
+  const double exponents_array[] = {0, 0, 0,  // x^0 y^0 z^0
+                                    1, 0, 0,  // x^1 y^0 z^0
+                                    0, 1, 0,  // x^0 y^1 z^0
+                                    0, 0, 1,  // x^0 y^0 z^1
+                                    2, 0, 0,  // x^2 y^0 z^0
+                                    1, 1, 0,  // x^1 y^1 z^0
+                                    1, 0, 1,  // x^1 y^0 z^1
+                                    0, 2, 0,  // x^0 y^2 z^0
+                                    0, 1, 1,  // x^0 y^1 z^1
+                                    0, 0, 2}; // x^0 y^0 z^2
+  Table<2, double> exponents(num_poly_coeffs, dim, exponents_array);
+
+  Functions::Polynomial<dim> quadratic(exponents, coeffs);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Mesh
+  Triangulation<dim> triangulation;
+  GridGenerator::subdivided_hyper_cube_with_simplices(triangulation, 2);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Base finite element field
+  const FE_SimplexP<dim> fe(order);
+  MappingP1<dim> mapping;
+
+  DoFHandler<dim> dof_handler(triangulation); 
+  dof_handler.distribute_dofs(fe);
+
+  const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+  // Nodal coordinates
+  std::vector<Point<dim>> dof_coords(dof_handler.n_dofs());
+  DoFTools::map_dofs_to_support_points(mapping, dof_handler, dof_coords);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Compute linear interpolant
+  Vector<double> interpolant(dof_handler.n_dofs());
+
+  VectorTools::interpolate(dof_handler, quadratic, interpolant);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Enriched finite element field
+  const int order_enriched = order + 1;
+  const FE_SimplexP<dim> fe_enriched(order_enriched);
+
+  DoFHandler<dim> dof_handler_enriched(triangulation); 
+  dof_handler_enriched.distribute_dofs(fe_enriched);
+  //-------------------------------------------------------------------------//
+
+  //-------------------------------------------------------------------------//
+  // Create monomial basis for least-squares fit
+
+  const int basis_size = radial::get_min_points<dim>(order_enriched);
+
+  radial::patch_basis<dim> patch_basis_funcs(basis_size);
+  radial::create_patch_basis(order, patch_basis_funcs);
+  //-------------------------------------------------------------------------//
+
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
+  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
+
+  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
+                                vertex_to_cell, vertex_to_cell_enriched);
+
+  std::set<types::global_dof_index> patch_dofs;
+
+  // Solve least-squares problem for central vertex patch. This patch does not
+  // require any growth iterations.
+  int v = 13;
+  std::vector<radial::cell_pointer<dim>> patch_cells = vertex_to_cell[v];
+  for (const auto &cell: vertex_to_cell[v])
+  {
+    cell->get_dof_indices(local_dof_indices);
+    for (unsigned int i = 0; i < dofs_per_cell; i++)
+      patch_dofs.insert(local_dof_indices[i]);
+  }
+
+  // Vector of least-squares coefficients
+  Vector<double> a(basis_size);
+
+  Point<dim> coord_min, coord_max;
+  radial::find_patch_bounding_box(dof_coords, patch_dofs,
+                                  coord_min, coord_max);
+  radial::least_squares_patch_integral(patch_cells, coord_min, coord_max,
+                                       patch_basis_funcs, mapping, fe,
+                                       interpolant, a);
+
+  // Test equivalence at a point
+  Point<dim> test_point = {0.5, 0.5, 0.5};
+  // Since the least-squares problem is solved with normalized coordinates,
+  // use the normalized coordinates when passing the point in to the patch
+  // basis functions.
+  Point<dim> test_point_normalized = {0.0, 0.0, 0.0};
+
+  double exact_val = quadratic.value(test_point);
+  std::cout << "P" << order <<  " exact value = " << exact_val << std::endl;
+
+  double test_val = 0;
+  for (int i = 0; i < basis_size; i++)
+    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+  std::cout << "P" << order <<  " test value = " << test_val << std::endl;
+
+  double relative_error = std::abs(exact_val - test_val) / exact_val;
+
+  if (relative_error < 1e-13)
+    std::cout << "Integral P" << order << " Passed" << std::endl;
+  else
+    std::cout << "Integral P" << order << " Failed" << std::endl;
 }
 
 void least_squares_patch_test_P2_3D()
@@ -569,6 +821,9 @@ int main()
 {
   least_squares_patch_discrete_test_P1_3D();
   least_squares_patch_discrete_test_P2_3D();
+
+  least_squares_patch_integral_test_P1_3D();
+  least_squares_patch_integral_test_P2_3D();
 
   least_squares_patch_test_P1_3D();
   least_squares_patch_test_P2_3D();

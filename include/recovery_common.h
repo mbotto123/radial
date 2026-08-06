@@ -78,6 +78,16 @@ namespace radial
                                     double& rcond);
 
   template<int dim>
+  void least_squares_patch_integral(const std::vector<radial::cell_pointer<dim>>& patch_cells,
+                                    const Point<dim>& patch_coord_min,
+                                    const Point<dim>& patch_coord_max,
+                                    const radial::patch_basis<dim>& patch_basis_funcs,
+                                    const MappingP1<dim>& mapping,
+                                    const FiniteElement<dim>& fe,
+                                    const Vector<double>& solution,
+                                    Vector<double>& lsq_coeffs);
+
+  template<int dim>
   void evaluate_patch_polynomial(const std::vector<Point<dim>>& dof_coords_enriched,
                                  const std::vector<types::global_dof_index>& patch_dofs_enriched,
                                  const std::vector<double>& patch_weights,

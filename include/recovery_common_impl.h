@@ -7,6 +7,10 @@
 #include <deal.II/fe/fe_simplex_p.h>
 #include <deal.II/fe/mapping_p1.h>
 
+#include <deal.II/base/quadrature_lib.h>
+
+#include <deal.II/lac/lapack_full_matrix.h>
+
 #include <deal.II/base/point.h>
 #include <deal.II/base/table.h>
 
@@ -819,6 +823,81 @@ namespace radial
     gsl_matrix_free(A);
     gsl_vector_free(tau);
     gsl_vector_free(rhs);
+  }
+
+  template<int dim>
+  void least_squares_patch_integral(const std::vector<radial::cell_pointer<dim>>& patch_cells,
+                                    const Point<dim>& patch_coord_min,
+                                    const Point<dim>& patch_coord_max,
+                                    const radial::patch_basis<dim>& patch_basis_funcs,
+                                    const MappingP1<dim>& mapping,
+                                    const FiniteElement<dim>& fe,
+                                    const Vector<double>& solution,
+                                    Vector<double>& lsq_coeffs)
+  {
+    const unsigned int order_enriched = fe.degree + 1;
+    unsigned int min_points = radial::get_min_points<dim>(order_enriched);
+
+    // This quadrature formula is somewhat hardcoded to assume that the finite
+    // element solution was obtained using a quadrature formula of p + 1. If
+    // this assumption holds, then using p' + 1 here ensures that the integral
+    // least-squares fit is computed with a higher quadrature order than the
+    // finite element solution, which is what we want.
+    const QGaussSimplex<dim> quadrature_formula(order_enriched + 1);
+
+    FEValues<dim> fe_values(mapping,
+                            fe,
+                            quadrature_formula,
+                            update_values | update_quadrature_points | update_JxW_values);
+
+    const unsigned int dofs_per_cell = fe.n_dofs_per_cell();
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+    std::vector<double> solution_values(quadrature_formula.size());
+
+    Vector<double> rhs(min_points);
+    LAPACKFullMatrix<double> A(min_points, min_points);
+
+    rhs = 0;
+    A = 0;
+
+    for (const auto &cell: patch_cells)
+    {
+      fe_values.reinit(cell);
+      fe_values.get_function_values(solution, solution_values);
+
+      for (const unsigned int q_index : fe_values.quadrature_point_indices())
+      {
+        const Point<dim> &x_q = fe_values.quadrature_point(q_index);
+
+        Point<dim> x_q_scaled;
+        for (int d = 0; d < dim; d++)
+        {
+          x_q_scaled(d) = -1.0 + 2.0*(x_q(d) - patch_coord_min(d)) /
+                          (patch_coord_max(d) - patch_coord_min(d));
+        }
+
+        for (unsigned int i = 0; i < min_points; i++)
+        {
+          for (unsigned int j = 0; j < min_points; j++)
+          {
+            A(i,j) += patch_basis_funcs[i](x_q_scaled) *
+                      patch_basis_funcs[j](x_q_scaled) *
+                      fe_values.JxW(q_index);
+          }
+
+          rhs(i) += patch_basis_funcs[i](x_q_scaled) *
+                    solution_values[q_index] *
+                    fe_values.JxW(q_index);
+        }
+      }
+    }
+
+    A.set_property(LAPACKSupport::Property::symmetric);
+    A.compute_cholesky_factorization();
+
+    A.solve(rhs);
+    lsq_coeffs = rhs;
   }
 
   // Given the coefficients of a polynomial obtained by solving a least-squares

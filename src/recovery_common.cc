@@ -1,6 +1,8 @@
+#include <deal.II/fe/mapping_p1.h>
+
+#include <set>
+
 #include "recovery_common_impl.h"
-#include <set>
-#include <set>
 
 namespace radial
 {
@@ -111,6 +113,25 @@ namespace radial
                                   const radial::patch_basis<3>& patch_basis_funcs,
                                   Vector<double>& lsq_coeffs,
                                   double& rcond);
+
+  template void
+  least_squares_patch_integral<2>(const std::vector<radial::cell_pointer<2>>& patch_cells,
+                                  const Point<2>& patch_coord_min,
+                                  const Point<2>& patch_coord_max,
+                                  const radial::patch_basis<2>& patch_basis_funcs,
+                                  const MappingP1<2>& mapping,
+                                  const FiniteElement<2>& fe,
+                                  const Vector<double>& solution,
+                                  Vector<double>& lsq_coeffs);
+  template void
+  least_squares_patch_integral<3>(const std::vector<radial::cell_pointer<3>>& patch_cells,
+                                  const Point<3>& patch_coord_min,
+                                  const Point<3>& patch_coord_max,
+                                  const radial::patch_basis<3>& patch_basis_funcs,
+                                  const MappingP1<3>& mapping,
+                                  const FiniteElement<3>& fe,
+                                  const Vector<double>& solution,
+                                  Vector<double>& lsq_coeffs);
 
   template void
   evaluate_patch_polynomial<2>(const std::vector<Point<2>>& dof_coords_enriched,

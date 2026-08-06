@@ -1,9 +1,15 @@
 P1 exact value = 2.5
 P1 test value = 2.5
-P1 Passed
+Discrete P1 Passed
 P2 exact value = 4.625
 P2 test value = 4.625
-P2 Passed
+Discrete P2 Passed
+P1 exact value = 2
+P1 test value = 2
+Integral P1 Passed
+P2 exact value = 2.5
+P2 test value = 2.5
+Integral P2 Passed
 P1 exact value = 2.5
 P1 test value = 2.5
 P1 Passed
