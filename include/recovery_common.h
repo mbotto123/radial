@@ -2,7 +2,9 @@
 #define RECOVERY_COMMON_H
 
 #include <deal.II/dofs/dof_handler.h>
+
 #include <deal.II/fe/fe_values.h>
+#include <deal.II/fe/mapping_p1.h>
 
 #include <deal.II/base/point.h>
 
