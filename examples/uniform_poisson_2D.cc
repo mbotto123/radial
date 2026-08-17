@@ -119,11 +119,20 @@ int main()
   // Number of mesh refinements
   const int max_level = 10;
 
+  bool use_integral_least_squares = true;
   bool use_iterative_solver = false;
   //-------------------------------------------------------------------------//
 
   for (int order = min_order; order <= max_order; order++)
   {
+    std::string out_file_name = "Uniform_Poisson_2D_P" + std::to_string(order);
+    if (use_integral_least_squares)
+      out_file_name += "_IntegralPPR.txt";
+    else
+      out_file_name += "_DiscretePPR.txt";
+
+    std::ofstream out_file(out_file_name);
+
     std::cout << std::endl << "Running P" << order << " case..." << std::endl;
 
     ConvergenceTable convergence_table;
@@ -245,8 +254,9 @@ int main()
       timer.start();
 
       Vector<double> solution_enriched(dof_handler_enriched.n_dofs());
-      radial::recover_solution_ppr_discrete(dof_handler, mapping, solution,
-                                            dof_handler_enriched, solution_enriched);
+      radial::recover_solution_ppr(dof_handler, mapping, solution,
+                                   dof_handler_enriched, solution_enriched,
+                                   use_integral_least_squares);
 
       timer.stop();
       std::cout << "  Recovery: " << timer.last_wall_time() << std::endl;
@@ -351,6 +361,7 @@ int main()
     convergence_table.set_scientific("H1E", true);
 
     std::cout << std::endl;
-    convergence_table.write_text(std::cout);
+    convergence_table.write_text(out_file);
+    out_file.close();
   }
 }
