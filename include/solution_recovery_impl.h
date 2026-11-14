@@ -15,7 +15,6 @@
 
 #include <cmath>
 #include <set>
-#include <functional>
 
 #include <recovery_common.h>
 
@@ -23,6 +22,30 @@ namespace radial
 {
   using namespace dealii;
 
+  // Perform solution recovery on a C^0-continuous finite element solution field
+  // using the Polynomial-Preserving Recovery method of Naga and Zhang.
+  //
+  // Inputs:
+  // - `dof_handler`: The DoFHandler for the finite element solution field to
+  //   recover from.
+  // - `mapping`: The MappingP1 to map the reference element to physical space.
+  //   NOTE: The fact that this is hardcoded to MappingP1 means this function
+  //   assumes straight-sided elements. A generalization of this function to
+  //   work on curved elements would require this MappingP1 to be changed to
+  //   MappingFE initialized with the finite element corresponding to the
+  //   finite element solution.
+  // - `solution`: The Vector containing the DOFs of the finite element solution
+  //   field to recover from.
+  // - `dof_handler_enriched`: The DoFHandler for the recovered finite element
+  //   solution field.
+  //
+  // Input/Output:
+  // - `solution_enriched`: The Vector where the DOFs of the recovered finite
+  //   element solution field will be stored.
+  //
+  // Reference: A. Naga and Z. Zhang. “A Posteriori Error Estimates Based on the
+  // Polynomial Preserving Recovery”. In: SIAM J. Numer. Anal. 42.4 (2004),
+  // pp. 1780–1800.
   template <int dim>
   void recover_solution_ppr_discrete(const DoFHandler<dim>& dof_handler,
                                      const MappingP1<dim>& mapping,
@@ -188,6 +211,34 @@ namespace radial
     //------------------------------------------------------------------------//
   }
 
+  // Perform solution recovery on a C^0-continuous finite element solution field
+  // using a modified variant of the Polynomial-Preserving Recovery method of
+  // Naga and Zhang. In this version, the patch least-squares problems are
+  // implemented using continuous least-squares (L^2 projection). This actually
+  // means that the method is not polynomial-preserving, but the overall
+  // approach is still based on Naga and Zhang's method.
+  //
+  // Inputs:
+  // - `dof_handler`: The DoFHandler for the finite element solution field to
+  //   recover from.
+  // - `mapping`: The MappingP1 to map the reference element to physical space.
+  //   NOTE: The fact that this is hardcoded to MappingP1 means this function
+  //   assumes straight-sided elements. A generalization of this function to
+  //   work on curved elements would require this MappingP1 to be changed to
+  //   MappingFE initialized with the finite element corresponding to the
+  //   finite element solution.
+  // - `solution`: The Vector containing the DOFs of the finite element solution
+  //   field to recover from.
+  // - `dof_handler_enriched`: The DoFHandler for the recovered finite element
+  //   solution field.
+  //
+  // Input/Output:
+  // - `solution_enriched`: The Vector where the DOFs of the recovered finite
+  //   element solution field will be stored.
+  //
+  // Reference: A. Naga and Z. Zhang. “A Posteriori Error Estimates Based on the
+  // Polynomial Preserving Recovery”. In: SIAM J. Numer. Anal. 42.4 (2004),
+  // pp. 1780–1800.
   template <int dim>
   void recover_solution_ppr_integral(const DoFHandler<dim>& dof_handler,
                                      const MappingP1<dim>& mapping,
