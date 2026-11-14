@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 
-dim = '2D'
+dim = 3
 ppr_type = 'Discrete'
 
 #------------------------------------------------------------------------------#
 # P1 L^2 error
 #------------------------------------------------------------------------------#
 
-file_name = f'../build/Uniform_Poisson_{dim}_P1_{ppr_type}PPR.txt'
+file_name = f'../build/Uniform_Poisson_{dim}D_P1_{ppr_type}PPR.txt'
 
 h = []
 error_L2 = []
@@ -32,7 +32,7 @@ plt.loglog(h, error_L2_enriched, '^--', color='orange', label='P2 Enriched Solut
 # P2 L^2 error
 #------------------------------------------------------------------------------#
 
-file_name = f'../build/Uniform_Poisson_{dim}_P2_{ppr_type}PPR.txt'
+file_name = f'../build/Uniform_Poisson_{dim}D_P2_{ppr_type}PPR.txt'
 
 h = []
 error_L2 = []
@@ -51,7 +51,7 @@ with open(file_name, 'r') as file:
 plt.loglog(h, error_L2, 'o-', color='blue', label='P2 Solution')
 plt.loglog(h, error_L2_enriched, '^--', color='purple', label='P3 Enriched Solution')
 
-plt.xlabel(r'$h_E = \mathrm{1/(Elements)}^{1/2}$')
+plt.xlabel(rf'$h_E = \mathrm{{1/(Elements)}}^{{1/{dim}}}$')
 plt.ylabel(r'$L^2$ Error')
 
 plt.grid(True, which='minor', linestyle=':')
@@ -61,7 +61,7 @@ plt.legend()
 # P1 H^1 semi-norm error
 #------------------------------------------------------------------------------#
 
-file_name = f'../build/Uniform_Poisson_{dim}_P1_{ppr_type}PPR.txt'
+file_name = f'../build/Uniform_Poisson_{dim}D_P1_{ppr_type}PPR.txt'
 
 h = []
 error_H1semi = []
@@ -86,7 +86,7 @@ plt.loglog(h, error_H1semi_enriched, '^--', color='orange', label='P2 Enriched S
 # P2 H^1 semi-norm error
 #------------------------------------------------------------------------------#
 
-file_name = f'../build/Uniform_Poisson_{dim}_P2_{ppr_type}PPR.txt'
+file_name = f'../build/Uniform_Poisson_{dim}D_P2_{ppr_type}PPR.txt'
 
 h = []
 error_H1semi = []
@@ -105,7 +105,7 @@ with open(file_name, 'r') as file:
 plt.loglog(h, error_H1semi, 'o-', color='blue', label='P2 Solution')
 plt.loglog(h, error_H1semi_enriched, '^--', color='purple', label='P3 Enriched Solution')
 
-plt.xlabel(r'$h_E = \mathrm{1/(Elements)}^{1/2}$')
+plt.xlabel(rf'$h_E = \mathrm{{1/(Elements)}}^{{1/{dim}}}$')
 plt.ylabel(r'$H^1$ Semi-norm Error')
 
 plt.grid(True, which='minor', linestyle=':')
