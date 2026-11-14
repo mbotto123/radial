@@ -91,7 +91,7 @@ namespace radial
       patch_boundary_vertices.erase(v);
 
       // Vector of least-squares coefficients
-      Vector<double> a(min_points);
+      Vector<double> lsq_coeffs(min_points);
       // Reciprocal condition number of the least-squares system on the patch
       double rcond;
       // The reciprocal condition number value at which we consider the
@@ -113,7 +113,7 @@ namespace radial
                                              patch_dofs, min_points,
                                              coord_min, coord_max,
                                              patch_basis_funcs,
-                                             a, rcond);
+                                             lsq_coeffs, rcond);
       }
       else
       {
@@ -165,7 +165,7 @@ namespace radial
                                                patch_dofs, min_points,
                                                coord_min, coord_max,
                                                patch_basis_funcs,
-                                               a, rcond);
+                                               lsq_coeffs, rcond);
         }
 
         growth_iter++;
@@ -182,7 +182,8 @@ namespace radial
                                         vertex_to_dof_enriched[v],
                                         vertex_to_weight[v],
                                         coord_min, coord_max,
-                                        patch_basis_funcs, a, solution_enriched);
+                                        patch_basis_funcs, lsq_coeffs,
+                                        solution_enriched);
     }
     //------------------------------------------------------------------------//
   }
@@ -268,7 +269,7 @@ namespace radial
       patch_boundary_vertices.erase(v);
 
       // Vector of least-squares coefficients
-      Vector<double> a(min_points);
+      Vector<double> lsq_coeffs(min_points);
 
       int growth_iter = 0;
       const int max_iter = 3;
@@ -321,13 +322,14 @@ namespace radial
                                       coord_min, coord_max);
       radial::least_squares_patch_integral(patch_cells, coord_min, coord_max,
                                            patch_basis_funcs, mapping, fe,
-                                           solution, a);
+                                           solution, lsq_coeffs);
 
       radial::evaluate_patch_polynomial(dof_coords_enriched,
                                         vertex_to_dof_enriched[v],
                                         vertex_to_weight[v],
                                         coord_min, coord_max,
-                                        patch_basis_funcs, a, solution_enriched);
+                                        patch_basis_funcs, lsq_coeffs,
+                                        solution_enriched);
     }
     //------------------------------------------------------------------------//
   }

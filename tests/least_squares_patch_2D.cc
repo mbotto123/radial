@@ -112,7 +112,7 @@ void least_squares_patch_discrete_test_P1_2D()
   std::set<types::global_dof_index> patch_dofs = vertex_to_dof[v];
 
   // Vector of least-squares coefficients
-  Vector<double> a(basis_size);
+  Vector<double> lsq_coeffs(basis_size);
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
@@ -122,7 +122,7 @@ void least_squares_patch_discrete_test_P1_2D()
   radial::least_squares_patch_discrete(dof_coords, interpolant,
                                        patch_dofs, basis_size,
                                        coord_min, coord_max, patch_basis_funcs,
-                                       a, rcond);
+                                       lsq_coeffs, rcond);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -136,7 +136,7 @@ void least_squares_patch_discrete_test_P1_2D()
 
   double test_val = 0;
   for (int i = 0; i < basis_size; i++)
-    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+    test_val += lsq_coeffs(i) * patch_basis_funcs[i](test_point_normalized);
   std::cout << "P" << order <<  " test value = " << test_val << std::endl;
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
@@ -235,14 +235,14 @@ void least_squares_patch_integral_test_P1_2D()
   }
 
   // Vector of least-squares coefficients
-  Vector<double> a(basis_size);
+  Vector<double> lsq_coeffs(basis_size);
 
   Point<dim> coord_min, coord_max;
   radial::find_patch_bounding_box(dof_coords, patch_dofs,
                                   coord_min, coord_max);
   radial::least_squares_patch_integral(patch_cells, coord_min, coord_max,
                                        patch_basis_funcs, mapping, fe,
-                                       interpolant, a);
+                                       interpolant, lsq_coeffs);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -256,7 +256,7 @@ void least_squares_patch_integral_test_P1_2D()
 
   double test_val = 0;
   for (int i = 0; i < basis_size; i++)
-    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+    test_val += lsq_coeffs(i) * patch_basis_funcs[i](test_point_normalized);
   std::cout << "P" << order <<  " test value = " << test_val << std::endl;
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
@@ -360,7 +360,7 @@ void least_squares_patch_test_P1_2D()
   }
 
   // Vector of least-squares coefficients
-  Vector<double> a(basis_size);
+  Vector<double> lsq_coeffs(basis_size);
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
@@ -372,7 +372,7 @@ void least_squares_patch_test_P1_2D()
                               coord_min, coord_max,
                               patch_basis_funcs, fe,
                               interpolant, fe_values_nodes,
-                              a, rcond);
+                              lsq_coeffs, rcond);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -386,7 +386,7 @@ void least_squares_patch_test_P1_2D()
 
   double test_val = 0;
   for (int i = 0; i < basis_size; i++)
-    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+    test_val += lsq_coeffs(i) * patch_basis_funcs[i](test_point_normalized);
   std::cout << "P" << order <<  " test value = " << test_val << std::endl;
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
@@ -484,7 +484,7 @@ void least_squares_patch_discrete_test_P2_2D()
   std::set<types::global_dof_index> patch_dofs = vertex_to_dof[v];
 
   // Vector of least-squares coefficients
-  Vector<double> a(basis_size);
+  Vector<double> lsq_coeffs(basis_size);
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
@@ -494,7 +494,7 @@ void least_squares_patch_discrete_test_P2_2D()
   radial::least_squares_patch_discrete(dof_coords, interpolant,
                                        patch_dofs, basis_size,
                                        coord_min, coord_max, patch_basis_funcs,
-                                       a, rcond);
+                                       lsq_coeffs, rcond);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -508,7 +508,7 @@ void least_squares_patch_discrete_test_P2_2D()
 
   double test_val = 0;
   for (int i = 0; i < basis_size; i++)
-    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+    test_val += lsq_coeffs(i) * patch_basis_funcs[i](test_point_normalized);
   std::cout << "P" << order <<  " test value = " << test_val << std::endl;
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
@@ -610,14 +610,14 @@ void least_squares_patch_integral_test_P2_2D()
   }
 
   // Vector of least-squares coefficients
-  Vector<double> a(basis_size);
+  Vector<double> lsq_coeffs(basis_size);
 
   Point<dim> coord_min, coord_max;
   radial::find_patch_bounding_box(dof_coords, patch_dofs,
                                   coord_min, coord_max);
   radial::least_squares_patch_integral(patch_cells, coord_min, coord_max,
                                        patch_basis_funcs, mapping, fe,
-                                       interpolant, a);
+                                       interpolant, lsq_coeffs);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -631,7 +631,7 @@ void least_squares_patch_integral_test_P2_2D()
 
   double test_val = 0;
   for (int i = 0; i < basis_size; i++)
-    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+    test_val += lsq_coeffs(i) * patch_basis_funcs[i](test_point_normalized);
   std::cout << "P" << order <<  " test value = " << test_val << std::endl;
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
@@ -739,7 +739,7 @@ void least_squares_patch_test_P2_2D()
   }
 
   // Vector of least-squares coefficients
-  Vector<double> a(basis_size);
+  Vector<double> lsq_coeffs(basis_size);
   // Reciprocal condition number of the least-squares system on the patch
   double rcond;
 
@@ -751,7 +751,7 @@ void least_squares_patch_test_P2_2D()
                               coord_min, coord_max,
                               patch_basis_funcs, fe,
                               interpolant, fe_values_nodes,
-                              a, rcond);
+                              lsq_coeffs, rcond);
 
   // Test equivalence at a point
   Point<dim> test_point = {0.5, 0.5};
@@ -765,7 +765,7 @@ void least_squares_patch_test_P2_2D()
 
   double test_val = 0;
   for (int i = 0; i < basis_size; i++)
-    test_val += a(i) * patch_basis_funcs[i](test_point_normalized);
+    test_val += lsq_coeffs(i) * patch_basis_funcs[i](test_point_normalized);
   std::cout << "P" << order <<  " test value = " << test_val << std::endl;
 
   double relative_error = std::abs(exact_val - test_val) / exact_val;
