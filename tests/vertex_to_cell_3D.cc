@@ -49,25 +49,13 @@ void vertex_to_cell_test_3D(const int order)
   //-------------------------------------------------------------------------//
 
   std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
-  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
-                                vertex_to_cell, vertex_to_cell_enriched);
+  radial::create_vertex_to_cell(dof_handler, vertex_to_cell);
 
   for (types::global_vertex_index v = 0; v < vertex_to_cell.size(); v++)
   {
     std::cout << "Patch " << v << " cells: ";
     for (const auto &cell: vertex_to_cell[v])
-    {
-      std::cout << cell->index() << ",";
-    }
-    std::cout << std::endl;
-  }
-
-  for (types::global_vertex_index v = 0; v < vertex_to_cell_enriched.size(); v++)
-  {
-    std::cout << "Enriched Patch " << v << " cells: ";
-    for (const auto &cell: vertex_to_cell_enriched[v])
     {
       std::cout << cell->index() << ",";
     }

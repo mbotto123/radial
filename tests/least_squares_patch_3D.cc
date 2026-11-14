@@ -223,10 +223,8 @@ void least_squares_patch_integral_test_P1_3D()
   //-------------------------------------------------------------------------//
 
   std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
-  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
-                                vertex_to_cell, vertex_to_cell_enriched);
+  radial::create_vertex_to_cell(dof_handler, vertex_to_cell);
 
   std::set<types::global_dof_index> patch_dofs;
 
@@ -354,10 +352,8 @@ void least_squares_patch_test_P1_3D()
   //-------------------------------------------------------------------------//
 
   std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
-  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
-                                vertex_to_cell, vertex_to_cell_enriched);
+  radial::create_vertex_to_cell(dof_handler, vertex_to_cell);
 
   std::set<types::global_dof_index> patch_dofs;
 
@@ -620,10 +616,8 @@ void least_squares_patch_integral_test_P2_3D()
   //-------------------------------------------------------------------------//
 
   std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
-  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
-                                vertex_to_cell, vertex_to_cell_enriched);
+  radial::create_vertex_to_cell(dof_handler, vertex_to_cell);
 
   std::set<types::global_dof_index> patch_dofs;
 
@@ -761,10 +755,8 @@ void least_squares_patch_test_P2_3D()
   //-------------------------------------------------------------------------//
 
   std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell;
-  std::vector<std::vector<radial::cell_pointer<dim>>> vertex_to_cell_enriched;
 
-  radial::create_vertex_to_cell(dof_handler, dof_handler_enriched,
-                                vertex_to_cell, vertex_to_cell_enriched);
+  radial::create_vertex_to_cell(dof_handler, vertex_to_cell);
 
   std::set<types::global_dof_index> patch_dofs;
 

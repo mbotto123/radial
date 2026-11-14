@@ -26,9 +26,7 @@ namespace radial
 
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
-                             const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell,
-                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell_enriched);
+                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell);
 
   template <int dim>
   void create_vertex_mappings(const DoFHandler<dim>& dof_handler,

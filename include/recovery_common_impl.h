@@ -36,25 +36,13 @@ namespace radial
   // to the different cells in the patch. These pointers may be pointing to
   // cells that are far away from each other in memory, so maybe there is a
   // more efficient way to implement this in terms of memory access. TODO.
-  //
-  // Two data structures are filled, one for the non-enriched field, and one
-  // for the enriched field. Although the global element indices are the same
-  // for both fields, a pointer to a non-enriched field cell is not the same
-  // as a pointer to an enriched field cell, so we keep track of them separately.
   template <int dim>
   void create_vertex_to_cell(const DoFHandler<dim>& dof_handler,
-                             const DoFHandler<dim>& dof_handler_enriched,
-                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell,
-                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell_enriched)
+                             std::vector<std::vector<radial::cell_pointer<dim>>>& vertex_to_cell)
   {
     const Triangulation<dim>& triangulation = dof_handler.get_triangulation();
 
     vertex_to_cell.resize(triangulation.n_vertices());
-    vertex_to_cell_enriched.resize(triangulation.n_vertices());
-
-    // Get iterator for enriched field explicitly. We need to take care of incrementing
-    // this iterator manually, so that it keeps up with the iterator we're looping over.
-    radial::cell_pointer<dim> cell_enriched_it = dof_handler_enriched.begin();
 
     for (const auto &cell: dof_handler.active_cell_iterators())
     {
@@ -62,11 +50,7 @@ namespace radial
       {
         // Add base field cell
         vertex_to_cell[cell->vertex_index(v)].push_back(cell);
-        // Add enriched field cell
-        vertex_to_cell_enriched[cell->vertex_index(v)].push_back(cell_enriched_it);
       }
-      
-      ++cell_enriched_it; // This iterator needs to be incremented manually
     }
   }
 
