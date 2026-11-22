@@ -1,9 +1,9 @@
-# radial: ***R***ecovery-b***a***se***d*** ***I***sotropic ***A***daptation ***L***ibrary
+# Radial: ***R***ecovery-b***a***se***d*** ***I***sotropic ***A***daptation ***L***ibrary
 
 > [!NOTE]
 > **This repository is in very early development.**
 
-The Recovery-Based Isotropic Adaptation Library (radial) is a library for problem-independent finite element mesh adaptation, based on the deal.ii library and using Gmsh for mesh generation.
+The Recovery-Based Isotropic Adaptation Library (Radial) is a C++ library for problem-independent finite element mesh adaptation, based on the deal.II library and using Gmsh for mesh generation.
 
 Radial is planned to have the following features, some of which may not be available initially as this repository is in early development:
 - Problem-independent
@@ -13,13 +13,13 @@ Radial is planned to have the following features, some of which may not be avail
 - Based on re-meshing with no hanging nodes
 - Only allows for isotropic adaptation
 
-[^1]: The limitation to P2 is due to the fact that deal.ii does not currently support simplex elements beyond P2. The methods implemented in this library are capable of handling elements beyond P2,
-but these elements are not available in deal.ii yet.
+[^1]: The limitation to P2 is due to the fact that deal.II does not currently support simplex elements beyond P2. The methods implemented in this library are capable of handling elements beyond P2,
+but these elements are not available in deal.II yet.
 
 ## Examples
 
-There are a few example cases included that demonstrate the usage of radial. The basic finite element machinery used in these examples is largely based on the deal.ii tutorial. Users who are
-familiar with deal.ii can use these examples to see how radial is incoporated into a typical deal.ii program.
+There are a few example cases included that demonstrate the usage of Radial. The basic finite element machinery used in these examples is largely based on the deal.II tutorial. Users who are
+familiar with deal.II can use these examples to see how Radial is incoporated into a typical deal.II program.
 
 ### Compiling an example
 
@@ -47,7 +47,7 @@ cmake -DCMAKE_BUILD_TYPE="Release" ..
 
 Then, compile an example as shown above.
 
-[^2]: For more information about switching build types in deal.ii, see the ["Switching build types" section in deal.ii's "How to use CMake to configure your projects with deal.II" documentation](https://dealii.org/developer/users/cmake_user.html#cmakesimple.build_type).
+[^2]: For more information about switching build types in deal.II, see the ["Switching build types" section in deal.II's "How to use CMake to configure your projects with deal.II" documentation](https://dealii.org/developer/users/cmake_user.html#cmakesimple.build_type).
 
 ## Theory
 
@@ -71,16 +71,16 @@ One of the mesh size formulas used in this library is from the paper by Chamoin 
 
 ## Acknowledgements
 
-### deal.ii
+### deal.II
 
-While the adaptation methodology implemented in this library is different from the hanging-node approach native to deal.ii, deal.ii is used for all of the fundamental finite element machinery
-underlying this library. The deal.ii library is therefore acknowledged with the following references:
+While the adaptation methodology implemented in this library is different from the hanging-node approach native to deal.II, deal.II is used for all of the fundamental finite element machinery
+underlying this library. The deal.II library is therefore acknowledged with the following references:
 
 > D. Arndt, W. Bangerth, M. Bergbauer, B. Blais, M. Fehling, R. Gassmöller, T. Heister, L. Heltai, M. Kronbichler, M. Maier, P. Munch, S. Scheuerman, B. Turcksin, S. Uzunbajakau, D. Wells, M. Wichrowski.
-> "The deal.ii Library, Version 9.7". In: _Journal of Numerical Mathematics_, 33.4 (2025), pp. 403-415.
+> "The deal.II Library, Version 9.7". In: _Journal of Numerical Mathematics_, 33.4 (2025), pp. 403-415.
 
 > D. Arndt, W. Bangerth, D. Davydov, T. Heister, L. Heltai, M. Kronbichler, M. Maier, J.-P. Pelteret, B. Turcksin, D. Wells.
-> "The deal.ii finite element library: design, features, and insights". In: _Computers & Mathematics with Applications_, 82 (2021), pp. 407-422.
+> "The deal.II finite element library: design, features, and insights". In: _Computers & Mathematics with Applications_, 82 (2021), pp. 407-422.
 
 ### Gmsh
 
