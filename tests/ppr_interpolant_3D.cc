@@ -95,8 +95,8 @@ void ppr_discrete_interpolant_test_P1_3D()
 
   //-------------------------------------------------------------------------//
   // Solution recovery
-  radial::recover_solution_ppr(dof_handler, mapping, interpolant,
-                               dof_handler_enriched, interpolant_enriched);
+  radial::recover_solution(dof_handler, mapping, interpolant,
+                           dof_handler_enriched, interpolant_enriched);
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
@@ -186,9 +186,9 @@ void ppr_integral_interpolant_test_P1_3D()
 
   //-------------------------------------------------------------------------//
   // Solution recovery
-  radial::recover_solution_ppr(dof_handler, mapping, interpolant,
-                               dof_handler_enriched, interpolant_enriched,
-                               use_integral_least_squares);
+  radial::recover_solution(dof_handler, mapping, interpolant,
+                           dof_handler_enriched, interpolant_enriched,
+                           use_integral_least_squares);
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
@@ -293,8 +293,8 @@ void ppr_discrete_interpolant_test_P2_3D()
 
   //-------------------------------------------------------------------------//
   // Solution recovery
-  radial::recover_solution_ppr(dof_handler, mapping, interpolant,
-                               dof_handler_enriched, interpolant_enriched);
+  radial::recover_solution(dof_handler, mapping, interpolant,
+                           dof_handler_enriched, interpolant_enriched);
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//
@@ -390,9 +390,9 @@ void ppr_integral_interpolant_test_P2_3D()
 
   //-------------------------------------------------------------------------//
   // Solution recovery
-  radial::recover_solution_ppr(dof_handler, mapping, interpolant,
-                               dof_handler_enriched, interpolant_enriched,
-                               use_integral_least_squares);
+  radial::recover_solution(dof_handler, mapping, interpolant,
+                           dof_handler_enriched, interpolant_enriched,
+                           use_integral_least_squares);
   //-------------------------------------------------------------------------//
 
   //-------------------------------------------------------------------------//

@@ -12,11 +12,11 @@ namespace radial
   using namespace dealii;
 
   template <int dim>
-  void recover_solution_ppr(const DoFHandler<dim>& dof_handler, const MappingP1<dim>& mapping,
-                            const Vector<double>& solution,
-                            const DoFHandler<dim>& dof_handler_enriched,
-                            Vector<double>& solution_enriched,
-                            const bool use_integral_least_squares = false)
+  void recover_solution(const DoFHandler<dim>& dof_handler, const MappingP1<dim>& mapping,
+                        const Vector<double>& solution,
+                        const DoFHandler<dim>& dof_handler_enriched,
+                        Vector<double>& solution_enriched,
+                        const bool use_integral_least_squares = false)
   {
     if (use_integral_least_squares)
     {

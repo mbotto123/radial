@@ -158,8 +158,8 @@ int main()
 
     //-------------------------------------------------------------------------//
     // Solution recovery
-    radial::recover_solution_ppr(dof_handler, mapping, solution,
-                                 dof_handler_enriched, solution_enriched);
+    radial::recover_solution(dof_handler, mapping, solution,
+                             dof_handler_enriched, solution_enriched);
     //-------------------------------------------------------------------------//
 
     //-------------------------------------------------------------------------//
