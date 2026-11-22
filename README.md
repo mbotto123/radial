@@ -51,7 +51,7 @@ Then, compile an example as shown above.
 
 ## Theory
 
-This repository is an open-source implementation of some (but not all) of the methodolody described in the thesis:
+This repository is an open-source implementation of some (but not all) of the methodology described in the thesis:
 
 > M. Botto Tornielli. "Approximate L<sup>2</sup> Error Control by Solution Post-Processing for Finite Element Solutions of PDEs with Higher-Order Adaptive Methods."
 > SM Thesis. Massachusetts Institute of Technology, Center for Computational Science and Engineering, 2025. https://hdl.handle.net/1721.1/164837.
