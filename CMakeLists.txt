@@ -8,5 +8,7 @@ ENABLE_TESTING()
 include_directories(include)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+
+add_subdirectory(tests/recovery)
+
 add_subdirectory(examples)
