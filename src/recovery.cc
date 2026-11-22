@@ -2,7 +2,7 @@
 #include <deal.II/fe/mapping_p1.h>
 #include <deal.II/lac/vector.h>
 
-#include "solution_recovery_impl.h"
+#include "recovery_impl.h"
 
 namespace radial
 {

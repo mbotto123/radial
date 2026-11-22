@@ -1,5 +1,5 @@
-#ifndef SOLUTION_RECOVERY_H
-#define SOLUTION_RECOVERY_H
+#ifndef RECOVERY_H
+#define RECOVERY_H
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/fe/mapping_p1.h>
@@ -17,4 +17,4 @@ namespace radial
                             const bool use_integral_least_squares = false);
 } // namespace radial
 
-#endif // SOLUTION_RECOVERY_H
+#endif // RECOVERY_H
