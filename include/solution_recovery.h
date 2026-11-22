@@ -10,20 +10,6 @@ namespace radial
   using namespace dealii;
 
   template <int dim>
-  void recover_solution_ppr_discrete(const DoFHandler<dim>& dof_handler,
-                                     const MappingP1<dim>& mapping,
-                                     const Vector<double>& solution,
-                                     const DoFHandler<dim>& dof_handler_enriched,
-                                     Vector<double>& solution_enriched);
-
-  template <int dim>
-  void recover_solution_ppr_integral(const DoFHandler<dim>& dof_handler,
-                                     const MappingP1<dim>& mapping,
-                                     const Vector<double>& solution,
-                                     const DoFHandler<dim>& dof_handler_enriched,
-                                     Vector<double>& solution_enriched);
-
-  template <int dim>
   void recover_solution_ppr(const DoFHandler<dim>& dof_handler, const MappingP1<dim>& mapping,
                             const Vector<double>& solution,
                             const DoFHandler<dim>& dof_handler_enriched,

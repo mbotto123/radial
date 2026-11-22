@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include <recovery_common.h>
+#include <recovery_integral.h>
 
 //-------------------------------------------------------------------------//
 // Test of finding a patch bounding box in 2D

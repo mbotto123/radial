@@ -22,6 +22,8 @@
 #include <cmath>
 
 #include <recovery_common.h>
+#include <recovery_discrete.h>
+#include <recovery_integral.h>
 
 //-------------------------------------------------------------------------//
 // Test of solving a least-squares problem on a patch in 3D

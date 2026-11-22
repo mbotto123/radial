@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include <recovery_common.h>
+#include <recovery_integral.h>
 
 //-------------------------------------------------------------------------//
 // Test of creating vertex-to-cell mapping in 3D
