@@ -2,7 +2,7 @@
 
 #include <set>
 
-#include "recovery_common_impl.h"
+#include "recovery/recovery_common_impl.h"
 
 namespace radial
 {

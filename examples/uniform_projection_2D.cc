@@ -23,7 +23,7 @@
 #include <fstream>
 #include <cmath>
 
-#include <recovery.h>
+#include <recovery/recovery.h>
 
 using namespace dealii;
 

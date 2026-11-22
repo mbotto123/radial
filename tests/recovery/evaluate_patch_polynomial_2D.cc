@@ -21,7 +21,7 @@
 #include <fstream>
 #include <cmath>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 //-------------------------------------------------------------------------//
 // Test of evaluating a least-squares patch polynomial in 2D

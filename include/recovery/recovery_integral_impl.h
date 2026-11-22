@@ -13,7 +13,7 @@
 
 #include <set>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 // Functions specific to integral least-squares recovery, including the recovery
 // function itself.

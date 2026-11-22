@@ -1,4 +1,4 @@
-#include "recovery_integral_impl.h"
+#include "recovery/recovery_integral_impl.h"
 
 namespace radial
 {

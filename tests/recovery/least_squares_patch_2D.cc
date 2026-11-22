@@ -21,9 +21,9 @@
 #include <fstream>
 #include <cmath>
 
-#include <recovery_common.h>
-#include <recovery_discrete.h>
-#include <recovery_integral.h>
+#include <recovery/recovery_common.h>
+#include <recovery/recovery_discrete.h>
+#include <recovery/recovery_integral.h>
 
 //-------------------------------------------------------------------------//
 // Test of solving a least-squares problem on a patch in 2D

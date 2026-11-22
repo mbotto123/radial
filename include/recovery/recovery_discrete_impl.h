@@ -14,7 +14,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_linalg.h>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 // Functions specific to discrete least-squares recovery, including the recovery
 // function itself.

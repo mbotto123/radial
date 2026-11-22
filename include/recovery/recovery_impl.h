@@ -4,8 +4,8 @@
 
 #include <deal.II/lac/vector.h>
 
-#include <recovery_discrete.h>
-#include <recovery_integral.h>
+#include <recovery/recovery_discrete.h>
+#include <recovery/recovery_integral.h>
 
 namespace radial
 {

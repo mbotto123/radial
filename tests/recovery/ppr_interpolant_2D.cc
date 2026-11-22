@@ -21,8 +21,8 @@
 #include <fstream>
 #include <cmath>
 
-#include <recovery.h>
-#include <recovery_common.h>
+#include <recovery/recovery.h>
+#include <recovery/recovery_common.h>
 
 //-------------------------------------------------------------------------//
 // Test of solution recovery function in 2D

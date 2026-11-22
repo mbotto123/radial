@@ -13,7 +13,7 @@
 // Uncomment if adding Legendre basis option later
 // #include <gsl/gsl_sf_legendre.h>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 // Functions common to both discrete and integral least-squares recovery
 

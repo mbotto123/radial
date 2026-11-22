@@ -12,7 +12,7 @@
 #include <fstream>
 #include <cmath>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 //-------------------------------------------------------------------------//
 // Test of creating vertex mappings in 3D

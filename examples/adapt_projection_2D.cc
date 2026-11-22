@@ -31,7 +31,7 @@
 
 #include <gmsh.h>
 
-#include <recovery.h>
+#include <recovery/recovery.h>
 
 using namespace dealii;
 

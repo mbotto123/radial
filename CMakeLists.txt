@@ -7,7 +7,9 @@ ENABLE_TESTING()
 
 include_directories(include)
 
-add_subdirectory(src)
+add_library(radial SHARED)
+add_subdirectory(src/recovery)
+deal_ii_setup_target(radial)
 
 add_subdirectory(tests/recovery)
 

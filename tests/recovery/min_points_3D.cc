@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 //----------------------------------------------------------------------------//
 // Test of computing minimum number of coefficients to define a polynomial in 3D

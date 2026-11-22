@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cmath>
 
-#include <recovery_common.h>
+#include <recovery/recovery_common.h>
 
 //-------------------------------------------------------------------------//
 // Test of patch polynomial basis creation in 2D

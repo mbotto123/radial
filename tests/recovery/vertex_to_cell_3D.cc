@@ -12,8 +12,8 @@
 #include <fstream>
 #include <cmath>
 
-#include <recovery_common.h>
-#include <recovery_integral.h>
+#include <recovery/recovery_common.h>
+#include <recovery/recovery_integral.h>
 
 //-------------------------------------------------------------------------//
 // Test of creating vertex-to-cell mapping in 3D
